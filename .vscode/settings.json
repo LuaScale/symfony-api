@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "luascale",
+        "projectKey": "LuaScale_symfony-api"
+    }
+}

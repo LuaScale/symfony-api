@@ -19,22 +19,17 @@ class ProductController extends AbstractController
         EntityManagerInterface $entityManager
     ): JsonResponse
     {
-        // 1. Récupérer le JSON envoyé par l'utilisateur
         $jsonContent = $request->getContent();
 
-        // 2. Transformer ce JSON en objet "Product" (Désérialisation)
         try {
             $product = $serializer->deserialize($jsonContent, Product::class, 'json');
         } catch (\Exception $e) {
-            // Bubble the serializer failure message to help debugging payload issues
             return $this->json(['error' => $e->getMessage()], 400);
         }
 
-        // 3. Sauvegarder en base de données
         $entityManager->persist($product);
         $entityManager->flush();
 
-        // 4. Renvoyer le produit créé (Code 201 = Created)
         return $this->json($product, 201);
     }
 }

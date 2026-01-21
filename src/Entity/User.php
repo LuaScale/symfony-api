@@ -187,11 +187,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function removeShop(Shop $shop): static
     {
-        if ($this->shops->removeElement($shop)) {
+        if ($this->shops->removeElement($shop) && $shop->getOwner() === $this) {
             // set the owning side to null (unless already changed)
-            if ($shop->getOwner() === $this) {
-                $shop->setOwner(null);
-            }
+            $shop->setOwner(null);
         }
 
         return $this;

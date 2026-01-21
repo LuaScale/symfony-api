@@ -6,11 +6,13 @@ namespace App\Tests\Api;
 
 final class UserResourceTest extends ApiTestCase
 {
+    private const ACCEPT_JSONLD = 'application/ld+json';
+
     public function testGetUsersCollectionContainsFixtureUserAndHasExpectedTypes(): void
     {
         $client = $this->createClientAndLoadFixtures();
 
-        $client->request('GET', '/api/users', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api/users', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
         self::assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -42,16 +44,15 @@ final class UserResourceTest extends ApiTestCase
         self::assertIsString($id);
         self::assertStringStartsWith('/api/users/', $id);
 
-        $client->request('GET', $id, ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', $id, ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
         self::assertResponseIsSuccessful();
     }
 
     public function testUnknownUserReturns404(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/users/999999999', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api/users/999999999', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
 
         self::assertResponseStatusCodeSame(404);
     }
 }
-

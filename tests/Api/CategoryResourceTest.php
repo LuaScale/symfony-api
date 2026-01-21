@@ -6,11 +6,13 @@ namespace App\Tests\Api;
 
 final class CategoryResourceTest extends ApiTestCase
 {
+    private const ACCEPT_JSONLD = 'application/ld+json';
+
     public function testGetCategoriesCollectionContainsFixtureCategory(): void
     {
         $client = $this->createClientAndLoadFixtures();
 
-        $client->request('GET', '/api/categories', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api/categories', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
         self::assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -27,7 +29,7 @@ final class CategoryResourceTest extends ApiTestCase
     {
         $client = $this->createClientAndLoadFixtures();
 
-        $client->request('GET', '/api/categories', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api/categories', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
         self::assertResponseIsSuccessful();
 
         $collection = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -44,16 +46,15 @@ final class CategoryResourceTest extends ApiTestCase
         self::assertIsString($id);
         self::assertStringStartsWith('/api/categories/', $id);
 
-        $client->request('GET', $id, ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', $id, ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
         self::assertResponseIsSuccessful();
     }
 
     public function testUnknownCategoryReturns404(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/categories/999999999', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api/categories/999999999', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
 
         self::assertResponseStatusCodeSame(404);
     }
 }
-

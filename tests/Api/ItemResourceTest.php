@@ -6,10 +6,11 @@ namespace App\Tests\Api;
 
 final class ItemResourceTest extends ApiTestCase
 {
+    private const ACCEPT_JSONLD = 'application/ld+json';
     public function testGetItemsCollectionReturnsJsonLdCollection(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/items', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api/items', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
 
         self::assertResponseIsSuccessful();
 
@@ -46,7 +47,7 @@ final class ItemResourceTest extends ApiTestCase
     {
         $client = $this->createClientAndLoadFixtures();
 
-        $client->request('GET', '/api/items', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api/items', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
         self::assertResponseIsSuccessful();
 
         $collection = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -65,17 +66,17 @@ final class ItemResourceTest extends ApiTestCase
         self::assertIsString($categoryIri);
         self::assertStringStartsWith('/api/', $categoryIri);
 
-        $client->request('GET', $shopIri, ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', $shopIri, ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
         self::assertResponseIsSuccessful();
 
-        $client->request('GET', $categoryIri, ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', $categoryIri, ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
         self::assertResponseIsSuccessful();
     }
 
     public function testUnknownItemReturns404(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/items/999999999', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api/items/999999999', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
 
         self::assertResponseStatusCodeSame(404);
     }

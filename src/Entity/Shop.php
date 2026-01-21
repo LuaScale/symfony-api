@@ -100,11 +100,9 @@ class Shop
 
     public function removeItem(Item $item): static
     {
-        if ($this->items->removeElement($item)) {
+        if ($this->items->removeElement($item) && $item->getShop() === $this) {
             // set the owning side to null (unless already changed)
-            if ($item->getShop() === $this) {
-                $item->setShop(null);
-            }
+            $item->setShop(null);
         }
 
         return $this;

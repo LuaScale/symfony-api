@@ -61,6 +61,9 @@
             "migrations/.gitignore"
         ]
     },
+    "liip/test-fixtures-bundle": {
+        "version": "3.7.0"
+    },
     "nelmio/cors-bundle": {
         "version": "2.6",
         "recipe": {
@@ -71,6 +74,21 @@
         },
         "files": [
             "config/packages/nelmio_cors.yaml"
+        ]
+    },
+    "phpunit/phpunit": {
+        "version": "12.5",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "11.1",
+            "ref": "1117deb12541f35793eec9fff7494d7aa12283fc"
+        },
+        "files": [
+            "./.env.test",
+            "./phpunit.dist.xml",
+            "./tests/bootstrap.php",
+            "./bin/phpunit"
         ]
     },
     "symfony/console": {

@@ -11,7 +11,8 @@ RUN install-php-extensions \
     pdo_pgsql \
     intl \
     zip \
-    opcache
+    opcache \
+    pcov
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

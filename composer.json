@@ -32,6 +32,10 @@
         "symfony/yaml": "8.0.*"
     },
     "require-dev": {
+        "liip/test-fixtures-bundle": "*",
+        "phpunit/phpunit": "*",
+        "symfony/browser-kit": "8.0.*",
+        "symfony/css-selector": "8.0.*",
         "symfony/maker-bundle": "^1.65"
     },
     "config": {
@@ -75,6 +79,15 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "test:docker": [
+            "docker compose exec -T -e APP_RUNNING_IN_CONTAINER=1 -e APP_ENV=test api php vendor/bin/phpunit"
+        ],
+        "test:docker:coverage": [
+            "docker compose exec -T -e APP_RUNNING_IN_CONTAINER=1 -e APP_ENV=test api php vendor/bin/phpunit --coverage-text --coverage-html var/coverage/html --coverage-clover var/coverage/clover.xml"
+        ],
+        "test:docker:coverage:clean": [
+            "powershell -NoProfile -File .\\scripts\\test-coverage-clean.ps1"
         ]
     },
     "conflict": {

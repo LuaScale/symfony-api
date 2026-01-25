@@ -18,22 +18,13 @@ final class ItemResourceTest extends ApiTestCase
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertContains($data['@type'] ?? null, ['Collection', 'hydra:Collection']);
-
-        $members = $data['member'] ?? $data['hydra:member'] ?? null;
-        self::assertIsArray($members);
+        // Validate Hydra collection structure
+        $members = $this->assertHydraCollection($data);
         self::assertNotEmpty($members);
 
         // Find the fixture item by name
-        $fixtureItem = null;
-        foreach ($members as $item) {
-            if (($item['name'] ?? '') === self::FIXTURE_ITEM_NAME) {
-                $fixtureItem = $item;
-                break;
-            }
-        }
+        $fixtureItem = $this->findInCollection($members, 'name', self::FIXTURE_ITEM_NAME);
 
-        self::assertIsArray($fixtureItem, 'Fixture item "' . self::FIXTURE_ITEM_NAME . '" not found in collection');
         self::assertIsString($fixtureItem['name'] ?? null);
         self::assertIsString($fixtureItem['description'] ?? null);
 
@@ -60,21 +51,13 @@ final class ItemResourceTest extends ApiTestCase
         $client->request('GET', '/api/items', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
-        $collection = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
-        $members = $collection['member'] ?? $collection['hydra:member'] ?? [];
-        self::assertIsArray($members);
-        self::assertNotEmpty($members);
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+
+        // Validate Hydra collection structure
+        $members = $this->assertHydraCollection($data);
 
         // Find the fixture item by name
-        $fixtureItem = null;
-        foreach ($members as $item) {
-            if (($item['name'] ?? '') === self::FIXTURE_ITEM_NAME) {
-                $fixtureItem = $item;
-                break;
-            }
-        }
-
-        self::assertIsArray($fixtureItem, 'Fixture item "' . self::FIXTURE_ITEM_NAME . '" not found in collection');
+        $fixtureItem = $this->findInCollection($members, 'name', self::FIXTURE_ITEM_NAME);
 
         $shopIri = $fixtureItem['shop'] ?? null;
         $categoryIri = $fixtureItem['category'] ?? null;
@@ -94,7 +77,11 @@ final class ItemResourceTest extends ApiTestCase
     public function testUnknownItemReturns404(): void
     {
         $client = $this->getTestClient();
-        $client->request('GET', '/api/items/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+
+        // Test with a non-existent ID to verify proper 404 handling
+        // Note: This assumes integer IDs. For UUID-based APIs, this test would need adjustment.
+        $nonExistentId = $this->getNonExistentId();
+        $client->request('GET', "/api/items/{$nonExistentId}", server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);
     }

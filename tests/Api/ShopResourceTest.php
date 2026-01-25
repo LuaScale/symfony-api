@@ -17,21 +17,13 @@ final class ShopResourceTest extends ApiTestCase
         self::assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
-        $members = $data['member'] ?? $data['hydra:member'] ?? null;
 
-        self::assertIsArray($members);
-        self::assertNotEmpty($members);
+        // Validate Hydra collection structure
+        $members = $this->assertHydraCollection($data);
 
         // Find the fixture shop by name
-        $fixtureShop = null;
-        foreach ($members as $shop) {
-            if (($shop['name'] ?? '') === self::FIXTURE_SHOP_NAME) {
-                $fixtureShop = $shop;
-                break;
-            }
-        }
+        $fixtureShop = $this->findInCollection($members, 'name', self::FIXTURE_SHOP_NAME);
 
-        self::assertIsArray($fixtureShop, 'Fixture shop "' . self::FIXTURE_SHOP_NAME . '" not found in collection');
         self::assertIsString($fixtureShop['name'] ?? null);
         self::assertIsString($fixtureShop['description'] ?? null);
 
@@ -46,7 +38,11 @@ final class ShopResourceTest extends ApiTestCase
     public function testUnknownShopReturns404(): void
     {
         $client = $this->getTestClient();
-        $client->request('GET', '/api/shops/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+
+        // Test with a non-existent ID to verify proper 404 handling
+        // Note: This assumes integer IDs. For UUID-based APIs, this test would need adjustment.
+        $nonExistentId = $this->getNonExistentId();
+        $client->request('GET', "/api/shops/{$nonExistentId}", server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);
     }

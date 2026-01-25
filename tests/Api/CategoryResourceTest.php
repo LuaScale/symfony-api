@@ -10,9 +10,9 @@ final class CategoryResourceTest extends ApiTestCase
 
     public function testGetCategoriesCollectionContainsFixtureCategory(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->createClient();
 
-        $client->request('GET', '/api/categories', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/categories', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -27,9 +27,9 @@ final class CategoryResourceTest extends ApiTestCase
 
     public function testCategoryItemHasStringNameAndSlug(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
 
-        $client->request('GET', '/api/categories', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/categories', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
         $collection = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -52,7 +52,7 @@ final class CategoryResourceTest extends ApiTestCase
 
     public function testUnknownCategoryReturns404(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
         $client->request('GET', '/api/categories/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);

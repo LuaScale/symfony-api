@@ -10,7 +10,7 @@ final class EntryPointTest extends ApiTestCase
 
     public function testGetApiEntryPoint(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
         $client->request('GET', '/api', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseIsSuccessful();

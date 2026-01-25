@@ -10,9 +10,9 @@ final class UserResourceTest extends ApiTestCase
 
     public function testGetUsersCollectionContainsFixtureUserAndHasExpectedTypes(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
 
-        $client->request('GET', '/api/users', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/users', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -50,7 +50,7 @@ final class UserResourceTest extends ApiTestCase
 
     public function testUnknownUserReturns404(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
         $client->request('GET', '/api/users/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);

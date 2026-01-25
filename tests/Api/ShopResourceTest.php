@@ -10,9 +10,9 @@ final class ShopResourceTest extends ApiTestCase
 
     public function testGetShopsCollectionContainsFixtureShopAndOwnerIriResolves(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
 
-        $client->request('GET', '/api/shops', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -31,13 +31,13 @@ final class ShopResourceTest extends ApiTestCase
         self::assertIsString($ownerIri);
         self::assertStringStartsWith('/api/users/', $ownerIri);
 
-        $client->request('GET', $ownerIri, ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', $ownerIri, server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
     }
 
     public function testUnknownShopReturns404(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
         $client->request('GET', '/api/shops/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);

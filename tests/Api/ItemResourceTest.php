@@ -9,8 +9,8 @@ final class ItemResourceTest extends ApiTestCase
     private const ACCEPT_JSONLD = 'application/ld+json';
     public function testGetItemsCollectionReturnsJsonLdCollection(): void
     {
-        $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/items', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client = $this->getTestClient();
+        $client->request('GET', '/api/items', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseIsSuccessful();
 
@@ -45,9 +45,9 @@ final class ItemResourceTest extends ApiTestCase
 
     public function testItemHasResolvableShopAndCategoryIris(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
 
-        $client->request('GET', '/api/items', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/items', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
         $collection = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
@@ -75,7 +75,7 @@ final class ItemResourceTest extends ApiTestCase
 
     public function testUnknownItemReturns404(): void
     {
-        $client = $this->createClientAndLoadFixtures();
+        $client = $this->getTestClient();
         $client->request('GET', '/api/items/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);

@@ -34,12 +34,11 @@ abstract class ApiTestCase extends WebTestCase
         if (!self::$fixturesLoaded) {
             $this->checkPdoDriver();
 
-            self::getContainer()
-                ->get(DatabaseToolCollection::class)
-                ->get(null)
-                ->loadFixtures([
-                    AppFixtures::class,
-                ]);
+            /** @var DatabaseToolCollection $databaseTool */
+            $databaseTool = self::getContainer()->get(DatabaseToolCollection::class);
+            $databaseTool->get()->loadFixtures([
+                AppFixtures::class,
+            ]);
 
             self::$fixturesLoaded = true;
         }
@@ -55,12 +54,11 @@ abstract class ApiTestCase extends WebTestCase
     {
         $client = static::createClient($options, $server);
 
-        self::getContainer()
-            ->get(DatabaseToolCollection::class)
-            ->get(null)
-            ->loadFixtures([
-                AppFixtures::class,
-            ]);
+        /** @var DatabaseToolCollection $databaseTool */
+        $databaseTool = self::getContainer()->get(DatabaseToolCollection::class);
+        $databaseTool->get()->loadFixtures([
+            AppFixtures::class,
+        ]);
 
         return $client;
     }
@@ -149,5 +147,95 @@ abstract class ApiTestCase extends WebTestCase
         // Use a very high ID that is extremely unlikely to exist
         // but still within PostgreSQL integer range (2147483647)
         return 999999999;
+    }
+
+    /**
+     * Make a JSON-LD request with proper headers.
+     *
+     * @param KernelBrowser $client The test client
+     * @param string $method HTTP method (GET, POST, PUT, PATCH, DELETE)
+     * @param string $url The URL to request
+     * @param array<string, mixed>|null $data The data to send (will be JSON encoded)
+     * @return void
+     */
+    protected function jsonLdRequest(KernelBrowser $client, string $method, string $url, ?array $data = null): void
+    {
+        $client->request(
+            $method,
+            $url,
+            server: [
+                'HTTP_ACCEPT' => 'application/ld+json',
+                'CONTENT_TYPE' => 'application/ld+json',
+            ],
+            content: $data ? json_encode($data) : null
+        );
+    }
+
+    /**
+     * Assert that a resource was created successfully and return its IRI.
+     *
+     * @param KernelBrowser $client The test client
+     * @return string The created resource IRI
+     */
+    protected function assertResourceCreated(KernelBrowser $client): string
+    {
+        self::assertResponseStatusCodeSame(201);
+        self::assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
+
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        self::assertArrayHasKey('@id', $data, 'Created resource must have @id');
+
+        return $data['@id'];
+    }
+
+    /**
+     * Assert that the response contains validation errors.
+     *
+     * @param KernelBrowser $client The test client
+     * @param array<string> $expectedFields Expected field names that should have violations
+     * @return void
+     */
+    protected function assertValidationErrors(KernelBrowser $client, array $expectedFields = []): void
+    {
+        self::assertResponseStatusCodeSame(422);
+
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        self::assertArrayHasKey('violations', $data, 'Validation error response must have violations');
+        self::assertIsArray($data['violations'], 'violations must be an array');
+        self::assertNotEmpty($data['violations'], 'violations array must not be empty');
+
+        if (!empty($expectedFields)) {
+            $violatedFields = array_map(static fn($v) => $v['propertyPath'], $data['violations']);
+
+            foreach ($expectedFields as $field) {
+                self::assertContains(
+                    $field,
+                    $violatedFields,
+                    sprintf('Expected validation error for field "%s"', $field)
+                );
+            }
+        }
+    }
+
+    /**
+     * Get the decoded JSON response as an array.
+     *
+     * @param KernelBrowser $client The test client
+     * @return array<string, mixed>
+     */
+    protected function getJsonResponse(KernelBrowser $client): array
+    {
+        return json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Assert that a resource was deleted successfully.
+     *
+     * @return void
+     */
+    protected function assertResourceDeleted(): void
+    {
+        self::assertResponseStatusCodeSame(204);
+        self::assertEmpty(static::getClient()->getResponse()->getContent());
     }
 }

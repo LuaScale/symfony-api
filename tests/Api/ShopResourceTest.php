@@ -38,7 +38,7 @@ final class ShopResourceTest extends ApiTestCase
     public function testUnknownShopReturns404(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/shops/999999999', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/shops/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);
     }

@@ -76,7 +76,7 @@ final class ItemResourceTest extends ApiTestCase
     public function testUnknownItemReturns404(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/items/999999999', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/items/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);
     }

@@ -6,10 +6,12 @@ namespace App\Tests\Api;
 
 final class EntryPointTest extends ApiTestCase
 {
+    private const ACCEPT_JSONLD = 'application/ld+json';
+
     public function testGetApiEntryPoint(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api', ['headers' => ['Accept' => 'application/ld+json']]);
+        $client->request('GET', '/api', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');

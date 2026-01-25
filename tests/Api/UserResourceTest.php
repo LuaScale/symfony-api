@@ -51,7 +51,7 @@ final class UserResourceTest extends ApiTestCase
     public function testUnknownUserReturns404(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/users/999999999', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/users/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);
     }

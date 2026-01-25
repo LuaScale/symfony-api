@@ -53,7 +53,7 @@ final class CategoryResourceTest extends ApiTestCase
     public function testUnknownCategoryReturns404(): void
     {
         $client = $this->createClientAndLoadFixtures();
-        $client->request('GET', '/api/categories/999999999', ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', '/api/categories/999999999', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);
     }

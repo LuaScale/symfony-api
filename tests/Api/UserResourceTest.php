@@ -7,6 +7,7 @@ namespace App\Tests\Api;
 final class UserResourceTest extends ApiTestCase
 {
     private const ACCEPT_JSONLD = 'application/ld+json';
+    private const FIXTURE_USER_EMAIL = 'vendeur@collector.shop';
 
     public function testGetUsersCollectionContainsFixtureUserAndHasExpectedTypes(): void
     {
@@ -21,30 +22,34 @@ final class UserResourceTest extends ApiTestCase
         self::assertIsArray($members);
         self::assertNotEmpty($members);
 
-        $emails = array_values(array_filter(array_map(static fn ($u) => $u['email'] ?? null, $members)));
-        self::assertContains('vendeur@collector.shop', $emails);
+        // Find the fixture user by email
+        $fixtureUser = null;
+        foreach ($members as $user) {
+            if (($user['email'] ?? '') === self::FIXTURE_USER_EMAIL) {
+                $fixtureUser = $user;
+                break;
+            }
+        }
 
-        $user = $members[0];
-        self::assertIsArray($user);
-
-        self::assertIsString($user['email'] ?? null);
-        self::assertIsString($user['pseudo'] ?? null);
+        self::assertIsArray($fixtureUser, 'Fixture user "' . self::FIXTURE_USER_EMAIL . '" not found in collection');
+        self::assertIsString($fixtureUser['email'] ?? null);
+        self::assertIsString($fixtureUser['pseudo'] ?? null);
 
         // roles is expected to be an array (list of strings)
-        if (array_key_exists('roles', $user)) {
-            self::assertIsArray($user['roles']);
+        if (array_key_exists('roles', $fixtureUser)) {
+            self::assertIsArray($fixtureUser['roles']);
         }
 
         // isVerified might be serialized as boolean
-        if (array_key_exists('isVerified', $user)) {
-            self::assertIsBool($user['isVerified']);
+        if (array_key_exists('isVerified', $fixtureUser)) {
+            self::assertIsBool($fixtureUser['isVerified']);
         }
 
-        $id = $user['@id'] ?? null;
+        $id = $fixtureUser['@id'] ?? null;
         self::assertIsString($id);
         self::assertStringStartsWith('/api/users/', $id);
 
-        $client->request('GET', $id, ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', $id, server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
     }
 

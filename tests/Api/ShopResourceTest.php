@@ -7,6 +7,7 @@ namespace App\Tests\Api;
 final class ShopResourceTest extends ApiTestCase
 {
     private const ACCEPT_JSONLD = 'application/ld+json';
+    private const FIXTURE_SHOP_NAME = 'La Caverne aux Merveilles';
 
     public function testGetShopsCollectionContainsFixtureShopAndOwnerIriResolves(): void
     {
@@ -21,13 +22,20 @@ final class ShopResourceTest extends ApiTestCase
         self::assertIsArray($members);
         self::assertNotEmpty($members);
 
-        $shop = $members[0];
-        self::assertIsArray($shop);
+        // Find the fixture shop by name
+        $fixtureShop = null;
+        foreach ($members as $shop) {
+            if (($shop['name'] ?? '') === self::FIXTURE_SHOP_NAME) {
+                $fixtureShop = $shop;
+                break;
+            }
+        }
 
-        self::assertIsString($shop['name'] ?? null);
-        self::assertIsString($shop['description'] ?? null);
+        self::assertIsArray($fixtureShop, 'Fixture shop "' . self::FIXTURE_SHOP_NAME . '" not found in collection');
+        self::assertIsString($fixtureShop['name'] ?? null);
+        self::assertIsString($fixtureShop['description'] ?? null);
 
-        $ownerIri = $shop['owner'] ?? null;
+        $ownerIri = $fixtureShop['owner'] ?? null;
         self::assertIsString($ownerIri);
         self::assertStringStartsWith('/api/users/', $ownerIri);
 

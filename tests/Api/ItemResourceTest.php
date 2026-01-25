@@ -7,6 +7,8 @@ namespace App\Tests\Api;
 final class ItemResourceTest extends ApiTestCase
 {
     private const ACCEPT_JSONLD = 'application/ld+json';
+    private const FIXTURE_ITEM_NAME = 'Goldorak Jumbo Shogun';
+
     public function testGetItemsCollectionReturnsJsonLdCollection(): void
     {
         $client = $this->getTestClient();
@@ -22,21 +24,29 @@ final class ItemResourceTest extends ApiTestCase
         self::assertIsArray($members);
         self::assertNotEmpty($members);
 
-        $first = $members[0];
-        self::assertIsArray($first);
-        self::assertIsString($first['name'] ?? null);
-        self::assertIsString($first['description'] ?? null);
-
-        if (array_key_exists('price', $first)) {
-            self::assertIsInt($first['price']);
+        // Find the fixture item by name
+        $fixtureItem = null;
+        foreach ($members as $item) {
+            if (($item['name'] ?? '') === self::FIXTURE_ITEM_NAME) {
+                $fixtureItem = $item;
+                break;
+            }
         }
 
-        if (array_key_exists('status', $first)) {
-            self::assertIsString($first['status']);
+        self::assertIsArray($fixtureItem, 'Fixture item "' . self::FIXTURE_ITEM_NAME . '" not found in collection');
+        self::assertIsString($fixtureItem['name'] ?? null);
+        self::assertIsString($fixtureItem['description'] ?? null);
+
+        if (array_key_exists('price', $fixtureItem)) {
+            self::assertIsInt($fixtureItem['price']);
+        }
+
+        if (array_key_exists('status', $fixtureItem)) {
+            self::assertIsString($fixtureItem['status']);
         }
 
         // createdAt is typically serialized as ISO-8601 string by API Platform
-        $createdAt = $first['createdAt'] ?? $first['created_at'] ?? null;
+        $createdAt = $fixtureItem['createdAt'] ?? $fixtureItem['created_at'] ?? null;
         if (null !== $createdAt) {
             self::assertIsString($createdAt);
             self::assertNotSame('', trim($createdAt));
@@ -55,21 +65,29 @@ final class ItemResourceTest extends ApiTestCase
         self::assertIsArray($members);
         self::assertNotEmpty($members);
 
-        $first = $members[0] ?? null;
-        self::assertIsArray($first);
+        // Find the fixture item by name
+        $fixtureItem = null;
+        foreach ($members as $item) {
+            if (($item['name'] ?? '') === self::FIXTURE_ITEM_NAME) {
+                $fixtureItem = $item;
+                break;
+            }
+        }
 
-        $shopIri = $first['shop'] ?? null;
-        $categoryIri = $first['category'] ?? null;
+        self::assertIsArray($fixtureItem, 'Fixture item "' . self::FIXTURE_ITEM_NAME . '" not found in collection');
+
+        $shopIri = $fixtureItem['shop'] ?? null;
+        $categoryIri = $fixtureItem['category'] ?? null;
 
         self::assertIsString($shopIri);
         self::assertStringStartsWith('/api/', $shopIri);
         self::assertIsString($categoryIri);
         self::assertStringStartsWith('/api/', $categoryIri);
 
-        $client->request('GET', $shopIri, ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', $shopIri, server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
-        $client->request('GET', $categoryIri, ['headers' => ['Accept' => self::ACCEPT_JSONLD]]);
+        $client->request('GET', $categoryIri, server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
     }
 

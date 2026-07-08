@@ -30,15 +30,12 @@ abstract class ApiTestCase extends WebTestCase
     {
         $client = static::createClient($options, $server);
 
-        // Load fixtures only once for all tests
         if (!self::$fixturesLoaded) {
             $this->checkPdoDriver();
 
             /** @var DatabaseToolCollection $databaseTool */
             $databaseTool = self::getContainer()->get(DatabaseToolCollection::class);
-            $databaseTool->get()->loadFixtures([
-                AppFixtures::class,
-            ]);
+            $databaseTool->get()->loadFixtures([AppFixtures::class]);
 
             self::$fixturesLoaded = true;
         }
@@ -52,23 +49,130 @@ abstract class ApiTestCase extends WebTestCase
      */
     protected function getTestClientAndReloadFixtures(array $options = [], array $server = []): KernelBrowser
     {
+        self::$fixturesLoaded = false;
+
         $client = static::createClient($options, $server);
 
         /** @var DatabaseToolCollection $databaseTool */
         $databaseTool = self::getContainer()->get(DatabaseToolCollection::class);
-        $databaseTool->get()->loadFixtures([
-            AppFixtures::class,
-        ]);
+        $databaseTool->get()->loadFixtures([AppFixtures::class]);
+
+        self::$fixturesLoaded = true;
 
         return $client;
     }
 
     /**
-     * Check if PDO driver is available.
+     * Obtains a JWT token by posting credentials to the login endpoint.
      */
+    protected function getJwtToken(KernelBrowser $client, string $email, string $password): string
+    {
+        $client->request(
+            'POST',
+            '/api/auth/login',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['email' => $email, 'password' => $password], JSON_THROW_ON_ERROR),
+        );
+
+        self::assertResponseIsSuccessful();
+
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+
+        return $data['token'];
+    }
+
+    /**
+     * Returns the JWT token for the fixture seller user.
+     */
+    protected function getSellerToken(KernelBrowser $client): string
+    {
+        return $this->getJwtToken($client, AppFixtures::SELLER_EMAIL, AppFixtures::SELLER_PASSWORD);
+    }
+
+    /**
+     * Returns HTTP server headers including a Bearer authorization token.
+     *
+     * @return array<string, string>
+     */
+    protected function authHeaders(string $token): array
+    {
+        return ['HTTP_AUTHORIZATION' => 'Bearer '.$token];
+    }
+
+    /**
+     * Create a shop via API and return its IRI.
+     */
+    protected function createShopViaApi(KernelBrowser $client, string $token, string $name, string $description = ''): string
+    {
+        $this->jsonLdRequest($client, 'POST', '/api/shops', [
+            'name' => $name,
+            'description' => $description,
+            'owner' => $this->getCurrentUserIri($client, $token),
+        ], $this->authHeaders($token));
+
+        return $this->assertResourceCreated($client);
+    }
+
+    /**
+     * Create an item via API and return its IRI.
+     */
+    protected function createItemViaApi(
+        KernelBrowser $client,
+        string $token,
+        string $name,
+        string $shopIri,
+        string $categoryIri,
+        int $price = 1000,
+        string $status = 'DRAFT',
+    ): string {
+        $this->jsonLdRequest($client, 'POST', '/api/items', [
+            'name' => $name,
+            'description' => 'Description for '.$name,
+            'price' => $price,
+            'status' => $status,
+            'shop' => $shopIri,
+            'category' => $categoryIri,
+        ], $this->authHeaders($token));
+
+        return $this->assertResourceCreated($client);
+    }
+
+    /**
+     * Return the first category IRI found in the collection.
+     */
+    protected function getFirstCategoryIri(KernelBrowser $client): string
+    {
+        $client->request('GET', '/api/categories', server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $categories = $this->assertHydraCollection($this->getJsonResponse($client));
+
+        return $categories[0]['@id'];
+    }
+
+    /**
+     * Return the IRI of the authenticated user by calling /api/users and matching by token email.
+     * Relies on the JWT token being valid and the user existing in the users collection.
+     */
+    private function getCurrentUserIri(KernelBrowser $client, string $token): string
+    {
+        $client->request('GET', '/api/users', server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $members = $this->assertHydraCollection($this->getJsonResponse($client));
+
+        // Decode the JWT payload to find the email (base64 URL-encoded middle segment)
+        [, $payloadB64] = explode('.', $token);
+        $payload = json_decode(base64_decode(str_pad(strtr($payloadB64, '-_', '+/'), strlen($payloadB64) % 4, '=')), true);
+        $email = $payload['username'] ?? $payload['email'] ?? '';
+
+        foreach ($members as $user) {
+            if (($user['email'] ?? '') === $email) {
+                return $user['@id'];
+            }
+        }
+
+        self::fail('Could not determine current user IRI from token');
+    }
+
     private function checkPdoDriver(): void
     {
-        // Doctrine needs an actual PDO driver (sqlite or pgsql).
         $rawRunningInContainer = $_SERVER['APP_RUNNING_IN_CONTAINER'] ?? $_ENV['APP_RUNNING_IN_CONTAINER'] ?? false;
         if (is_bool($rawRunningInContainer)) {
             $runningInContainer = $rawRunningInContainer;
@@ -99,18 +203,14 @@ abstract class ApiTestCase extends WebTestCase
      */
     protected function assertHydraCollection(array $data): array
     {
-        // Check @context (JSON-LD requirement)
         self::assertArrayHasKey('@context', $data, 'Hydra collection must have @context');
 
-        // Check @type is hydra:Collection or Collection (both are valid with JSON-LD context)
         $type = $data['@type'] ?? null;
         self::assertContains($type, ['Collection', 'hydra:Collection'], 'Collection @type must be "Collection" or "hydra:Collection"');
 
-        // Check member exists (can be 'member' or 'hydra:member' depending on JSON-LD context)
         $members = $data['member'] ?? $data['hydra:member'] ?? null;
         self::assertIsArray($members, 'Collection must have "member" or "hydra:member" array');
 
-        // Check totalItems exists (can be 'totalItems' or 'hydra:totalItems' depending on JSON-LD context)
         $totalItems = $data['totalItems'] ?? $data['hydra:totalItems'] ?? null;
         self::assertIsInt($totalItems, 'Collection must have "totalItems" or "hydra:totalItems" integer');
 
@@ -121,8 +221,6 @@ abstract class ApiTestCase extends WebTestCase
      * Find an item in a collection by a specific field value.
      *
      * @param array<int, array<string, mixed>> $members The collection members
-     * @param string $field The field to search by
-     * @param mixed $value The value to search for
      * @return array<string, mixed> The found item
      */
     protected function findInCollection(array $members, string $field, mixed $value): array
@@ -138,44 +236,32 @@ abstract class ApiTestCase extends WebTestCase
 
     /**
      * Get a non-existent resource ID for testing 404 responses.
-     * Returns an ID that is unlikely to exist in the database.
-     *
-     * @return int A very high ID value
      */
     protected function getNonExistentId(): int
     {
-        // Use a very high ID that is extremely unlikely to exist
-        // but still within PostgreSQL integer range (2147483647)
         return 999999999;
     }
 
     /**
      * Make a JSON-LD request with proper headers.
      *
-     * @param KernelBrowser $client The test client
-     * @param string $method HTTP method (GET, POST, PUT, PATCH, DELETE)
-     * @param string $url The URL to request
-     * @param array<string, mixed>|null $data The data to send (will be JSON encoded)
-     * @return void
+     * @param array<string, string> $extraServer Additional server headers (e.g. auth headers)
      */
-    protected function jsonLdRequest(KernelBrowser $client, string $method, string $url, ?array $data = null): void
+    protected function jsonLdRequest(KernelBrowser $client, string $method, string $url, ?array $data = null, array $extraServer = []): void
     {
         $client->request(
             $method,
             $url,
-            server: [
+            server: array_merge([
                 'HTTP_ACCEPT' => 'application/ld+json',
                 'CONTENT_TYPE' => 'application/ld+json',
-            ],
+            ], $extraServer),
             content: $data ? json_encode($data) : null
         );
     }
 
     /**
      * Assert that a resource was created successfully and return its IRI.
-     *
-     * @param KernelBrowser $client The test client
-     * @return string The created resource IRI
      */
     protected function assertResourceCreated(KernelBrowser $client): string
     {
@@ -191,9 +277,7 @@ abstract class ApiTestCase extends WebTestCase
     /**
      * Assert that the response contains validation errors.
      *
-     * @param KernelBrowser $client The test client
      * @param array<string> $expectedFields Expected field names that should have violations
-     * @return void
      */
     protected function assertValidationErrors(KernelBrowser $client, array $expectedFields = []): void
     {
@@ -220,7 +304,6 @@ abstract class ApiTestCase extends WebTestCase
     /**
      * Get the decoded JSON response as an array.
      *
-     * @param KernelBrowser $client The test client
      * @return array<string, mixed>
      */
     protected function getJsonResponse(KernelBrowser $client): array
@@ -230,8 +313,6 @@ abstract class ApiTestCase extends WebTestCase
 
     /**
      * Assert that a resource was deleted successfully.
-     *
-     * @return void
      */
     protected function assertResourceDeleted(): void
     {

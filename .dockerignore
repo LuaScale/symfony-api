@@ -1,0 +1,27 @@
+# VCS & IDE
+.git
+.github
+.idea
+.vscode
+
+# Dependencies & build artifacts (reinstalled inside the image)
+vendor
+var
+public/bundles
+
+# Local env & secrets (provided at runtime, never baked in)
+.env.local
+.env.*.local
+config/jwt/*.pem
+config/secrets
+
+# Tooling / caches
+.phpunit.cache
+.php-cs-fixer.cache
+phpunit.xml
+
+# Docker
+Dockerfile
+.dockerignore
+compose*.yaml
+docker-compose*.yml

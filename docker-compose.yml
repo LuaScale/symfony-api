@@ -1,6 +1,8 @@
 services:
   api:
-    build: .
+    build:
+      context: .
+      target: base
     ports:
       - "8080:80"
     volumes:

@@ -3,14 +3,36 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Repository\UserRepository;
+use App\State\UserPasswordHasherProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
-#[ApiResource]
+#[ApiResource(
+    normalizationContext: ['groups' => ['user:read']],
+    denormalizationContext: ['groups' => ['user:write']],
+    operations: [
+        new GetCollection(),
+        new Get(security: 'is_granted("IS_AUTHENTICATED_FULLY")'),
+        new Post(processor: UserPasswordHasherProcessor::class),
+        new Patch(
+            security: 'is_granted("IS_AUTHENTICATED_FULLY") and object == user',
+            processor: UserPasswordHasherProcessor::class,
+        ),
+    ]
+)]
+#[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée')]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -19,36 +41,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Assert\NotBlank]
+    #[Assert\Email]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $email = null;
 
-    /**
-     * @var list<string> The user roles
-     */
     #[ORM\Column]
+    #[Groups(['user:admin:write'])]
     private array $roles = [];
 
-    /**
-     * @var string The hashed password
-     */
     #[ORM\Column]
+    #[Groups(['user:write'])]
     private ?string $password = null;
 
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $pseudo = null;
 
     #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $phoneNumber = null;
 
     #[ORM\Column]
-    private ?bool $isVerified = null;
+    #[Groups(['user:read', 'user:admin:write'])]
+    private ?bool $isVerified = false;
 
     /**
      * @var Collection<int, Shop>
      */
     #[ORM\OneToMany(targetEntity: Shop::class, mappedBy: 'owner')]
+    #[Groups(['user:read'])]
     private Collection $shops;
 
     public function __construct()
@@ -73,31 +100,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
     }
 
-    /**
-     * @see UserInterface
-     */
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);
     }
 
-    /**
-     * @param list<string> $roles
-     */
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
@@ -105,9 +120,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @see PasswordAuthenticatedUserInterface
-     */
     public function getPassword(): ?string
     {
         return $this->password;
@@ -120,9 +132,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
-     */
     public function __serialize(): array
     {
         $data = (array) $this;
@@ -188,7 +197,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeShop(Shop $shop): static
     {
         if ($this->shops->removeElement($shop) && $shop->getOwner() === $this) {
-            // set the owning side to null (unless already changed)
             $shop->setOwner(null);
         }
 

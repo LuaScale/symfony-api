@@ -4,24 +4,22 @@ declare(strict_types=1);
 
 namespace App\Tests\Api;
 
+use App\DataFixtures\AppFixtures;
+
 final class ShopResourceTest extends ApiTestCase
 {
-    private const ACCEPT_JSONLD = 'application/ld+json';
-    private const FIXTURE_SHOP_NAME = 'La Caverne aux Merveilles';
+    private const string FIXTURE_SHOP_NAME = 'La Caverne aux Merveilles';
 
-    public function testGetShopsCollectionContainsFixtureShopAndOwnerIriResolves(): void
+    public function testGetShopsCollectionIsPublicAndContainsFixtureShop(): void
     {
         $client = $this->getTestClient();
 
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         self::assertResponseIsSuccessful();
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
-
-        // Validate Hydra collection structure
+        $data = $this->getJsonResponse($client);
         $members = $this->assertHydraCollection($data);
 
-        // Find the fixture shop by name
         $fixtureShop = $this->findInCollection($members, 'name', self::FIXTURE_SHOP_NAME);
 
         self::assertIsString($fixtureShop['name'] ?? null);
@@ -30,8 +28,18 @@ final class ShopResourceTest extends ApiTestCase
         $ownerIri = $fixtureShop['owner'] ?? null;
         self::assertIsString($ownerIri);
         self::assertStringStartsWith('/api/users/', $ownerIri);
+    }
 
-        $client->request('GET', $ownerIri, server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+    public function testShopOwnerIriResolvesWhenAuthenticated(): void
+    {
+        $client = $this->getTestClientAndReloadFixtures();
+        $auth = $this->authHeaders($this->getSellerToken($client));
+
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
+        $members = $this->assertHydraCollection($this->getJsonResponse($client));
+        $ownerIri = $this->findInCollection($members, 'name', self::FIXTURE_SHOP_NAME)['owner'];
+
+        $client->request('GET', $ownerIri, server: array_merge(['HTTP_ACCEPT' => self::CT_JSONLD], $auth));
         self::assertResponseIsSuccessful();
     }
 
@@ -39,11 +47,33 @@ final class ShopResourceTest extends ApiTestCase
     {
         $client = $this->getTestClient();
 
-        // Test with a non-existent ID to verify proper 404 handling
-        // Note: This assumes integer IDs. For UUID-based APIs, this test would need adjustment.
-        $nonExistentId = $this->getNonExistentId();
-        $client->request('GET', "/api/shops/{$nonExistentId}", server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', self::API_SHOPS.'/'.$this->getNonExistentId(), server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testCreateShopRequiresAuthentication(): void
+    {
+        $client = $this->getTestClient();
+
+        $this->jsonLdRequest($client, 'POST', self::API_SHOPS, ['name' => 'Unauthorized Shop']);
+
+        self::assertResponseStatusCodeSame(401);
+    }
+
+    public function testDeleteShopOwnedByAnotherUserReturns403(): void
+    {
+        $client = $this->getTestClientAndReloadFixtures();
+
+        // Get seller's shop IRI
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
+        $members = $this->assertHydraCollection($this->getJsonResponse($client));
+        $shopIri = $this->findInCollection($members, 'name', self::FIXTURE_SHOP_NAME)['@id'];
+
+        // Attempt delete as the buyer (who does not own this shop)
+        $buyerToken = $this->getJwtToken($client, AppFixtures::BUYER_EMAIL, AppFixtures::BUYER_PASSWORD);
+        $client->request('DELETE', $shopIri, server: $this->authHeaders($buyerToken));
+
+        self::assertResponseStatusCodeSame(403);
     }
 }

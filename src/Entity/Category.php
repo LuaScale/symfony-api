@@ -2,25 +2,52 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Repository\CategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
-#[ApiResource]
+#[ApiResource(
+    normalizationContext: ['groups' => ['category:read']],
+    denormalizationContext: ['groups' => ['category:write']],
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(security: self::ADMIN_SECURITY),
+        new Patch(security: self::ADMIN_SECURITY),
+        new Delete(security: self::ADMIN_SECURITY),
+    ]
+)]
+#[ApiFilter(SearchFilter::class, properties: ['name' => 'partial', 'slug' => 'exact'])]
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category
 {
+    private const string ADMIN_SECURITY = 'is_granted("ROLE_ADMIN")';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['category:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Groups(['category:read', 'category:write'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Groups(['category:read', 'category:write'])]
     private ?string $slug = null;
 
     /**
@@ -84,7 +111,6 @@ class Category
     public function removeItem(Item $item): static
     {
         if ($this->items->removeElement($item) && $item->getCategory() === $this) {
-            // set the owning side to null (unless already changed)
             $item->setCategory(null);
         }
 

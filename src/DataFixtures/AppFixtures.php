@@ -6,7 +6,6 @@ use App\Entity\Category;
 use App\Entity\Item;
 use App\Entity\Shop;
 use App\Entity\User;
-use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -18,20 +17,22 @@ class AppFixtures extends Fixture
     public const BUYER_EMAIL = 'acheteur@collector.shop';
     public const BUYER_PASSWORD = 'buyer-fixture-password';
 
-    public function __construct(private readonly UserPasswordHasherInterface $hasher) {}
+    public function __construct(private readonly UserPasswordHasherInterface $hasher)
+    {
+    }
 
     public function load(ObjectManager $manager): void
     {
         // Categories
         $figurines = $this->makeCategory('Figurines Vintage', 'figurines-vintage', $manager);
-        $comics    = $this->makeCategory('Comics & BD', 'comics-bd', $manager);
-        $retro     = $this->makeCategory('Retro Gaming', 'retro-gaming', $manager);
+        $comics = $this->makeCategory('Comics & BD', 'comics-bd', $manager);
+        $retro = $this->makeCategory('Retro Gaming', 'retro-gaming', $manager);
         $this->makeCategory('Jouets Vintage', 'jouets-vintage', $manager);
 
         // Users
         $sellerPassword = $_ENV['FIXTURE_USER_PASSWORD'] ?? self::SELLER_PASSWORD;
         $seller = $this->makeUser('vendeur@collector.shop', 'RetroHunter', $sellerPassword, true, $manager);
-        $buyer  = $this->makeUser('acheteur@collector.shop', 'CollectoBuyer', self::BUYER_PASSWORD, true, $manager);
+        $buyer = $this->makeUser('acheteur@collector.shop', 'CollectoBuyer', self::BUYER_PASSWORD, true, $manager);
 
         // Shops
         $caverne = $this->makeShop('La Caverne aux Merveilles', 'Spécialiste des jouets des années 80.', $seller, $manager);
@@ -93,7 +94,7 @@ class AppFixtures extends Fixture
         $item->setStatus($status);
         $item->setShop($shop);
         $item->setCategory($category);
-        $item->setCreatedAt(new DateTimeImmutable());
+        $item->setCreatedAt(new \DateTimeImmutable());
         $manager->persist($item);
 
         return $item;

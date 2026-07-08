@@ -6,26 +6,20 @@ namespace App\Tests\Api;
 
 use App\DataFixtures\AppFixtures;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
-use PDO;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use function filter_var;
-use function in_array;
-use function is_bool;
-use const FILTER_NULL_ON_FAILURE;
-use const FILTER_VALIDATE_BOOLEAN;
 
 /**
  * Base class for API integration tests.
  */
 abstract class ApiTestCase extends WebTestCase
 {
-    protected const string CT_JSONLD      = 'application/ld+json';
+    protected const string CT_JSONLD = 'application/ld+json';
     protected const string CT_MERGE_PATCH = 'application/merge-patch+json';
-    protected const string CT_JSON        = 'application/json';
-    protected const string API_ITEMS      = '/api/items';
-    protected const string API_SHOPS      = '/api/shops';
-    protected const string API_USERS      = '/api/users';
+    protected const string CT_JSON = 'application/json';
+    protected const string API_ITEMS = '/api/items';
+    protected const string API_SHOPS = '/api/shops';
+    protected const string API_USERS = '/api/users';
     protected const string API_CATEGORIES = '/api/categories';
     protected const string API_AUTH_LOGIN = '/api/auth/login';
 
@@ -80,12 +74,12 @@ abstract class ApiTestCase extends WebTestCase
             'POST',
             self::API_AUTH_LOGIN,
             server: ['CONTENT_TYPE' => self::CT_JSON],
-            content: json_encode(['email' => $email, 'password' => $password], JSON_THROW_ON_ERROR),
+            content: json_encode(['email' => $email, 'password' => $password], \JSON_THROW_ON_ERROR),
         );
 
         self::assertResponseIsSuccessful();
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
 
         return $data['token'];
     }
@@ -168,7 +162,7 @@ abstract class ApiTestCase extends WebTestCase
 
         // Decode the JWT payload to find the email (base64 URL-encoded middle segment)
         [, $payloadB64] = explode('.', $token);
-        $payload = json_decode(base64_decode(str_pad(strtr($payloadB64, '-_', '+/'), strlen($payloadB64) % 4, '=')), true);
+        $payload = json_decode(base64_decode(str_pad(strtr($payloadB64, '-_', '+/'), \strlen($payloadB64) % 4, '=')), true);
         $email = $payload['username'] ?? $payload['email'] ?? '';
 
         foreach ($members as $user) {
@@ -183,22 +177,22 @@ abstract class ApiTestCase extends WebTestCase
     private function checkPdoDriver(): void
     {
         $rawRunningInContainer = $_SERVER['APP_RUNNING_IN_CONTAINER'] ?? $_ENV['APP_RUNNING_IN_CONTAINER'] ?? false;
-        if (is_bool($rawRunningInContainer)) {
+        if (\is_bool($rawRunningInContainer)) {
             $runningInContainer = $rawRunningInContainer;
         } else {
-            $runningInContainer = filter_var(
+            $runningInContainer = \filter_var(
                 $rawRunningInContainer,
-                FILTER_VALIDATE_BOOLEAN,
-                FILTER_NULL_ON_FAILURE
+                \FILTER_VALIDATE_BOOLEAN,
+                \FILTER_NULL_ON_FAILURE
             );
-            if ($runningInContainer === null) {
+            if (null === $runningInContainer) {
                 $runningInContainer = false;
             }
         }
 
         if (!$runningInContainer
-            && !in_array('sqlite', PDO::getAvailableDrivers(), true)
-            && !in_array('pgsql', PDO::getAvailableDrivers(), true)
+            && !\in_array('sqlite', \PDO::getAvailableDrivers(), true)
+            && !\in_array('pgsql', \PDO::getAvailableDrivers(), true)
         ) {
             self::markTestSkipped('No PDO driver available (need pdo_sqlite or pdo_pgsql) to run API integration tests. Run them in Docker, or enable a PDO driver locally.');
         }
@@ -208,6 +202,7 @@ abstract class ApiTestCase extends WebTestCase
      * Assert that the response is a valid Hydra collection.
      *
      * @param array<string, mixed> $data The decoded JSON-LD response
+     *
      * @return array<int, array<string, mixed>> The collection members
      */
     protected function assertHydraCollection(array $data): array
@@ -230,6 +225,7 @@ abstract class ApiTestCase extends WebTestCase
      * Find an item in a collection by a specific field value.
      *
      * @param array<int, array<string, mixed>> $members The collection members
+     *
      * @return array<string, mixed> The found item
      */
     protected function findInCollection(array $members, string $field, mixed $value): array
@@ -240,7 +236,7 @@ abstract class ApiTestCase extends WebTestCase
             }
         }
 
-        self::fail(sprintf('Item with %s="%s" not found in collection', $field, $value));
+        self::fail(\sprintf('Item with %s="%s" not found in collection', $field, $value));
     }
 
     /**
@@ -277,7 +273,7 @@ abstract class ApiTestCase extends WebTestCase
         self::assertResponseStatusCodeSame(201);
         self::assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
         self::assertArrayHasKey('@id', $data, 'Created resource must have @id');
 
         return $data['@id'];
@@ -292,19 +288,19 @@ abstract class ApiTestCase extends WebTestCase
     {
         self::assertResponseStatusCodeSame(422);
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
         self::assertArrayHasKey('violations', $data, 'Validation error response must have violations');
         self::assertIsArray($data['violations'], 'violations must be an array');
         self::assertNotEmpty($data['violations'], 'violations array must not be empty');
 
         if (!empty($expectedFields)) {
-            $violatedFields = array_map(static fn($v) => $v['propertyPath'], $data['violations']);
+            $violatedFields = array_map(static fn ($v) => $v['propertyPath'], $data['violations']);
 
             foreach ($expectedFields as $field) {
                 self::assertContains(
                     $field,
                     $violatedFields,
-                    sprintf('Expected validation error for field "%s"', $field)
+                    \sprintf('Expected validation error for field "%s"', $field)
                 );
             }
         }
@@ -317,7 +313,7 @@ abstract class ApiTestCase extends WebTestCase
      */
     protected function getJsonResponse(KernelBrowser $client): array
     {
-        return json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        return json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
     }
 
     /**

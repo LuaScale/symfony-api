@@ -19,9 +19,9 @@ final class BuyerBrowseTest extends ApiTestCase
 
         // Resolve "Figurines Vintage" IRI
         $client->request('GET', '/api/categories', server: ['HTTP_ACCEPT' => self::JSONLD]);
-        $categories  = $this->assertHydraCollection($this->getJsonResponse($client));
+        $categories = $this->assertHydraCollection($this->getJsonResponse($client));
         $figurinesIri = $this->findInCollection($categories, 'slug', 'figurines-vintage')['@id'];
-        $figurinesId  = basename($figurinesIri);
+        $figurinesId = basename($figurinesIri);
 
         // Filter items by category
         $client->request('GET', "/api/items?category=/api/categories/{$figurinesId}", server: ['HTTP_ACCEPT' => self::JSONLD]);
@@ -157,9 +157,9 @@ final class BuyerBrowseTest extends ApiTestCase
 
         // Get a shop
         $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::JSONLD]);
-        $shops   = $this->assertHydraCollection($this->getJsonResponse($client));
+        $shops = $this->assertHydraCollection($this->getJsonResponse($client));
         $shopIri = $this->findInCollection($shops, 'name', 'La Caverne aux Merveilles')['@id'];
-        $shopId  = basename($shopIri);
+        $shopId = basename($shopIri);
 
         // Filter items by that shop
         $client->request('GET', "/api/items?shop=/api/shops/{$shopId}", server: ['HTTP_ACCEPT' => self::JSONLD]);

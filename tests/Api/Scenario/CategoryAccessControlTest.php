@@ -20,7 +20,7 @@ final class CategoryAccessControlTest extends ApiTestCase
         $this->assertHydraCollection($this->getJsonResponse($client));
 
         // Individual category
-        $categories  = $this->assertHydraCollection($this->getJsonResponse($client));
+        $categories = $this->assertHydraCollection($this->getJsonResponse($client));
         $categoryIri = $categories[0]['@id'];
         $client->request('GET', $categoryIri, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         self::assertResponseIsSuccessful();
@@ -29,7 +29,7 @@ final class CategoryAccessControlTest extends ApiTestCase
     public function testNonAdminCannotCreateCategory(): void
     {
         $client = $this->getTestClient();
-        $auth   = $this->authHeaders($this->getSellerToken($client));
+        $auth = $this->authHeaders($this->getSellerToken($client));
 
         $this->jsonLdRequest($client, 'POST', self::API_CATEGORIES, [
             'name' => 'Intrus',
@@ -42,14 +42,14 @@ final class CategoryAccessControlTest extends ApiTestCase
     public function testNonAdminCannotUpdateCategory(): void
     {
         $client = $this->getTestClient();
-        $auth   = $this->authHeaders($this->getSellerToken($client));
+        $auth = $this->authHeaders($this->getSellerToken($client));
 
         $client->request('GET', self::API_CATEGORIES, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
-        $categories  = $this->assertHydraCollection($this->getJsonResponse($client));
+        $categories = $this->assertHydraCollection($this->getJsonResponse($client));
         $categoryIri = $categories[0]['@id'];
 
         $client->request('PATCH', $categoryIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'HTTP_ACCEPT' => self::CT_JSONLD,
             'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: json_encode(['name' => 'Renommé']));
 
@@ -59,10 +59,10 @@ final class CategoryAccessControlTest extends ApiTestCase
     public function testNonAdminCannotDeleteCategory(): void
     {
         $client = $this->getTestClient();
-        $auth   = $this->authHeaders($this->getSellerToken($client));
+        $auth = $this->authHeaders($this->getSellerToken($client));
 
         $client->request('GET', self::API_CATEGORIES, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
-        $categories  = $this->assertHydraCollection($this->getJsonResponse($client));
+        $categories = $this->assertHydraCollection($this->getJsonResponse($client));
         $categoryIri = $categories[0]['@id'];
 
         $client->request('DELETE', $categoryIri, server: $auth);

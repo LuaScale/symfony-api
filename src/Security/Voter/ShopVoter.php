@@ -15,7 +15,7 @@ final class ShopVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::EDIT, self::DELETE], true)
+        return \in_array($attribute, [self::EDIT, self::DELETE], true)
             && $subject instanceof Shop;
     }
 

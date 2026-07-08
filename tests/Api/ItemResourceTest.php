@@ -16,7 +16,7 @@ final class ItemResourceTest extends ApiTestCase
 
         self::assertResponseIsSuccessful();
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
 
         // Validate Hydra collection structure
         $members = $this->assertHydraCollection($data);
@@ -28,11 +28,11 @@ final class ItemResourceTest extends ApiTestCase
         self::assertIsString($fixtureItem['name'] ?? null);
         self::assertIsString($fixtureItem['description'] ?? null);
 
-        if (array_key_exists('price', $fixtureItem)) {
+        if (\array_key_exists('price', $fixtureItem)) {
             self::assertIsInt($fixtureItem['price']);
         }
 
-        if (array_key_exists('status', $fixtureItem)) {
+        if (\array_key_exists('status', $fixtureItem)) {
             self::assertIsString($fixtureItem['status']);
         }
 
@@ -51,7 +51,7 @@ final class ItemResourceTest extends ApiTestCase
         $client->request('GET', '/api/items', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
 
         // Validate Hydra collection structure
         $members = $this->assertHydraCollection($data);

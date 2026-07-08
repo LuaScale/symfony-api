@@ -18,7 +18,7 @@ final class SellerJourneyTest extends ApiTestCase
         // 1. Register as a new seller
         $uniqueEmail = 'seller_'.uniqid().'@collector.shop';
 
-        $this->jsonLdRequest($client, 'POST', '/api/users', [
+        $this->jsonLdRequest($client, 'POST', self::API_USERS, [
             'email' => $uniqueEmail,
             'pseudo' => 'NewSeller',
             'password' => 'password123',
@@ -36,7 +36,7 @@ final class SellerJourneyTest extends ApiTestCase
         $shopIri = $this->createShopViaApi($client, $token, 'Ma Boutique E2E', 'Boutique de test');
 
         // 4. Shop is visible in the public listing
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $shops = $this->assertHydraCollection($this->getJsonResponse($client));
         $createdShop = $this->findInCollection($shops, 'name', 'Ma Boutique E2E');
         self::assertSame('Boutique de test', $createdShop['description']);
@@ -50,8 +50,8 @@ final class SellerJourneyTest extends ApiTestCase
 
         // 7. Update first item: DRAFT → VALIDATED, new price
         $client->request('PATCH', $item1Iri, server: array_merge([
-            'HTTP_ACCEPT' => 'application/ld+json',
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT' => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: json_encode(['status' => 'VALIDATED', 'price' => 5500]));
         self::assertResponseIsSuccessful();
         $updated = $this->getJsonResponse($client);
@@ -60,7 +60,7 @@ final class SellerJourneyTest extends ApiTestCase
 
         // 8. Both items appear when filtered by shop
         $shopId = basename($shopIri);
-        $client->request('GET', "/api/items?shop=/api/shops/{$shopId}", server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $client->request('GET', self::API_ITEMS.'?shop='.self::API_SHOPS."/{$shopId}", server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $items = $this->assertHydraCollection($this->getJsonResponse($client));
         self::assertCount(2, $items);
 
@@ -69,18 +69,18 @@ final class SellerJourneyTest extends ApiTestCase
         $this->assertResourceDeleted();
 
         // 10. Shop still exists, now with one item
-        $client->request('GET', $shopIri, server: array_merge(['HTTP_ACCEPT' => 'application/ld+json'], $auth));
+        $client->request('GET', $shopIri, server: array_merge(['HTTP_ACCEPT' => self::CT_JSONLD], $auth));
         self::assertResponseIsSuccessful();
 
-        $client->request('GET', "/api/items?shop=/api/shops/{$shopId}", server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $client->request('GET', self::API_ITEMS.'?shop='.self::API_SHOPS."/{$shopId}", server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $items = $this->assertHydraCollection($this->getJsonResponse($client));
         self::assertCount(1, $items);
         self::assertSame('Objet A', $items[0]['name']);
 
         // 11. Update shop name
         $client->request('PATCH', $shopIri, server: array_merge([
-            'HTTP_ACCEPT' => 'application/ld+json',
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT' => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: json_encode(['name' => 'Ma Boutique Renommée']));
         self::assertResponseIsSuccessful();
         self::assertSame('Ma Boutique Renommée', $this->getJsonResponse($client)['name']);
@@ -93,7 +93,7 @@ final class SellerJourneyTest extends ApiTestCase
         $this->assertResourceDeleted();
 
         // 13. Shop is gone
-        $client->request('GET', $shopIri, server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $client->request('GET', $shopIri, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -101,22 +101,19 @@ final class SellerJourneyTest extends ApiTestCase
     {
         $client = $this->getTestClientAndReloadFixtures();
 
-        // Seller owns "La Caverne aux Merveilles"
-        $sellerToken = $this->getSellerToken($client);
-
         // Buyer owns "Comic Hub Paris"
         $buyerToken = $this->getJwtToken($client, 'acheteur@collector.shop', 'buyer-fixture-password');
         $auth = $this->authHeaders($buyerToken);
 
         // Get seller's shop IRI
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $shops = $this->assertHydraCollection($this->getJsonResponse($client));
         $sellerShopIri = $this->findInCollection($shops, 'name', 'La Caverne aux Merveilles')['@id'];
 
         $categoryIri = $this->getFirstCategoryIri($client);
 
         // Buyer tries to create item in seller's shop → 403 (securityPostDenormalize)
-        $this->jsonLdRequest($client, 'POST', '/api/items', [
+        $this->jsonLdRequest($client, 'POST', self::API_ITEMS, [
             'name' => 'Intrusion Item',
             'description' => 'Should not be allowed',
             'price' => 1000,
@@ -134,7 +131,7 @@ final class SellerJourneyTest extends ApiTestCase
         $token  = $this->getSellerToken($client);
 
         // Existing DRAFT item from fixtures
-        $client->request('GET', '/api/items', server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $client->request('GET', self::API_ITEMS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $items   = $this->assertHydraCollection($this->getJsonResponse($client));
         $draftItem = $this->findInCollection($items, 'name', 'Game Boy Color – Violet');
         $itemIri   = $draftItem['@id'];
@@ -145,24 +142,24 @@ final class SellerJourneyTest extends ApiTestCase
 
         // DRAFT → VALIDATED
         $client->request('PATCH', $itemIri, server: array_merge([
-            'HTTP_ACCEPT'  => 'application/ld+json',
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: $patch(['status' => 'VALIDATED']));
         self::assertResponseIsSuccessful();
         self::assertSame('VALIDATED', $this->getJsonResponse($client)['status']);
 
         // VALIDATED → REJECTED
         $client->request('PATCH', $itemIri, server: array_merge([
-            'HTTP_ACCEPT'  => 'application/ld+json',
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: $patch(['status' => 'REJECTED']));
         self::assertResponseIsSuccessful();
         self::assertSame('REJECTED', $this->getJsonResponse($client)['status']);
 
         // REJECTED → DRAFT (back to draft is allowed)
         $client->request('PATCH', $itemIri, server: array_merge([
-            'HTTP_ACCEPT'  => 'application/ld+json',
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: $patch(['status' => 'DRAFT']));
         self::assertResponseIsSuccessful();
         self::assertSame('DRAFT', $this->getJsonResponse($client)['status']);

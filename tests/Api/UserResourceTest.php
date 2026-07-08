@@ -8,13 +8,13 @@ use App\DataFixtures\AppFixtures;
 
 final class UserResourceTest extends ApiTestCase
 {
-    private const ACCEPT_JSONLD = 'application/ld+json';
+    private const string TEST_EMAIL = 'nouveau@collector.shop';
 
     public function testGetUsersCollectionIsPublicAndContainsFixtureUser(): void
     {
         $client = $this->getTestClient();
 
-        $client->request('GET', '/api/users', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', self::API_USERS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         self::assertResponseIsSuccessful();
 
         $data = $this->getJsonResponse($client);
@@ -35,17 +35,17 @@ final class UserResourceTest extends ApiTestCase
     {
         $client = $this->getTestClient();
 
-        $client->request('GET', '/api/users', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', self::API_USERS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $members = $this->assertHydraCollection($this->getJsonResponse($client));
         $userIri = $this->findInCollection($members, 'email', AppFixtures::SELLER_EMAIL)['@id'];
 
         // Unauthenticated → 401
-        $client->request('GET', $userIri, server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', $userIri, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         self::assertResponseStatusCodeSame(401);
 
         // Authenticated → 200
         $token = $this->getSellerToken($client);
-        $client->request('GET', $userIri, server: array_merge(['HTTP_ACCEPT' => self::ACCEPT_JSONLD], $this->authHeaders($token)));
+        $client->request('GET', $userIri, server: array_merge(['HTTP_ACCEPT' => self::CT_JSONLD], $this->authHeaders($token)));
         self::assertResponseIsSuccessful();
     }
 
@@ -54,7 +54,7 @@ final class UserResourceTest extends ApiTestCase
         $client = $this->getTestClient();
         $auth = $this->authHeaders($this->getSellerToken($client));
 
-        $client->request('GET', '/api/users/'.$this->getNonExistentId(), server: array_merge(['HTTP_ACCEPT' => self::ACCEPT_JSONLD], $auth));
+        $client->request('GET', self::API_USERS.'/'.$this->getNonExistentId(), server: array_merge(['HTTP_ACCEPT' => self::CT_JSONLD], $auth));
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -63,21 +63,21 @@ final class UserResourceTest extends ApiTestCase
     {
         $client = $this->getTestClientAndReloadFixtures();
 
-        $this->jsonLdRequest($client, 'POST', '/api/users', [
-            'email' => 'nouveau@collector.shop',
+        $this->jsonLdRequest($client, 'POST', self::API_USERS, [
+            'email' => self::TEST_EMAIL,
             'pseudo' => 'NouveauVendeur',
             'password' => 'motdepasse123',
         ]);
 
-        $iri = $this->assertResourceCreated($client);
+        $this->assertResourceCreated($client);
         $data = $this->getJsonResponse($client);
 
-        self::assertSame('nouveau@collector.shop', $data['email']);
+        self::assertSame(self::TEST_EMAIL, $data['email']);
         self::assertSame('NouveauVendeur', $data['pseudo']);
         self::assertArrayNotHasKey('password', $data, 'password must never be exposed');
 
         // New user can log in with the plain-text password used at registration
-        $token = $this->getJwtToken($client, 'nouveau@collector.shop', 'motdepasse123');
+        $token = $this->getJwtToken($client, self::TEST_EMAIL, 'motdepasse123');
         self::assertIsString($token);
         self::assertNotEmpty($token);
     }

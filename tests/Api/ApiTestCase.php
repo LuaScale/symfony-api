@@ -20,6 +20,15 @@ use const FILTER_VALIDATE_BOOLEAN;
  */
 abstract class ApiTestCase extends WebTestCase
 {
+    protected const string CT_JSONLD      = 'application/ld+json';
+    protected const string CT_MERGE_PATCH = 'application/merge-patch+json';
+    protected const string CT_JSON        = 'application/json';
+    protected const string API_ITEMS      = '/api/items';
+    protected const string API_SHOPS      = '/api/shops';
+    protected const string API_USERS      = '/api/users';
+    protected const string API_CATEGORIES = '/api/categories';
+    protected const string API_AUTH_LOGIN = '/api/auth/login';
+
     private static bool $fixturesLoaded = false;
 
     /**
@@ -69,8 +78,8 @@ abstract class ApiTestCase extends WebTestCase
     {
         $client->request(
             'POST',
-            '/api/auth/login',
-            server: ['CONTENT_TYPE' => 'application/json'],
+            self::API_AUTH_LOGIN,
+            server: ['CONTENT_TYPE' => self::CT_JSON],
             content: json_encode(['email' => $email, 'password' => $password], JSON_THROW_ON_ERROR),
         );
 
@@ -104,7 +113,7 @@ abstract class ApiTestCase extends WebTestCase
      */
     protected function createShopViaApi(KernelBrowser $client, string $token, string $name, string $description = ''): string
     {
-        $this->jsonLdRequest($client, 'POST', '/api/shops', [
+        $this->jsonLdRequest($client, 'POST', self::API_SHOPS, [
             'name' => $name,
             'description' => $description,
             'owner' => $this->getCurrentUserIri($client, $token),
@@ -125,7 +134,7 @@ abstract class ApiTestCase extends WebTestCase
         int $price = 1000,
         string $status = 'DRAFT',
     ): string {
-        $this->jsonLdRequest($client, 'POST', '/api/items', [
+        $this->jsonLdRequest($client, 'POST', self::API_ITEMS, [
             'name' => $name,
             'description' => 'Description for '.$name,
             'price' => $price,
@@ -142,7 +151,7 @@ abstract class ApiTestCase extends WebTestCase
      */
     protected function getFirstCategoryIri(KernelBrowser $client): string
     {
-        $client->request('GET', '/api/categories', server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $client->request('GET', self::API_CATEGORIES, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $categories = $this->assertHydraCollection($this->getJsonResponse($client));
 
         return $categories[0]['@id'];
@@ -154,7 +163,7 @@ abstract class ApiTestCase extends WebTestCase
      */
     private function getCurrentUserIri(KernelBrowser $client, string $token): string
     {
-        $client->request('GET', '/api/users', server: ['HTTP_ACCEPT' => 'application/ld+json']);
+        $client->request('GET', self::API_USERS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $members = $this->assertHydraCollection($this->getJsonResponse($client));
 
         // Decode the JWT payload to find the email (base64 URL-encoded middle segment)
@@ -253,8 +262,8 @@ abstract class ApiTestCase extends WebTestCase
             $method,
             $url,
             server: array_merge([
-                'HTTP_ACCEPT' => 'application/ld+json',
-                'CONTENT_TYPE' => 'application/ld+json',
+                'HTTP_ACCEPT' => self::CT_JSONLD,
+                'CONTENT_TYPE' => self::CT_JSONLD,
             ], $extraServer),
             content: $data ? json_encode($data) : null
         );

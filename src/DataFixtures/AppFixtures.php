@@ -26,7 +26,7 @@ class AppFixtures extends Fixture
         $figurines = $this->makeCategory('Figurines Vintage', 'figurines-vintage', $manager);
         $comics    = $this->makeCategory('Comics & BD', 'comics-bd', $manager);
         $retro     = $this->makeCategory('Retro Gaming', 'retro-gaming', $manager);
-        $jouets    = $this->makeCategory('Jouets Vintage', 'jouets-vintage', $manager);
+        $this->makeCategory('Jouets Vintage', 'jouets-vintage', $manager);
 
         // Users
         $sellerPassword = $_ENV['FIXTURE_USER_PASSWORD'] ?? self::SELLER_PASSWORD;

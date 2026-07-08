@@ -11,8 +11,6 @@ use App\Tests\Api\ApiTestCase;
  */
 final class ShopManagementTest extends ApiTestCase
 {
-    private const JSONLD = 'application/ld+json';
-
     public function testCreateShopAsAuthenticatedUser(): void
     {
         $client = $this->getTestClientAndReloadFixtures();
@@ -20,15 +18,15 @@ final class ShopManagementTest extends ApiTestCase
 
         $shopIri = $this->createShopViaApi($client, $token, 'Nouvelle Boutique Test', 'Description de la boutique');
 
-        self::assertStringStartsWith('/api/shops/', $shopIri);
+        self::assertStringStartsWith(self::API_SHOPS.'/', $shopIri);
 
         // Shop visible in public listing
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::JSONLD]);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $shops = $this->assertHydraCollection($this->getJsonResponse($client));
         $created = $this->findInCollection($shops, 'name', 'Nouvelle Boutique Test');
 
         self::assertSame('Description de la boutique', $created['description']);
-        self::assertStringStartsWith('/api/users/', $created['owner']);
+        self::assertStringStartsWith(self::API_USERS.'/', $created['owner']);
     }
 
     public function testUpdateShopAsOwner(): void
@@ -38,13 +36,13 @@ final class ShopManagementTest extends ApiTestCase
         $auth   = $this->authHeaders($token);
 
         // Get seller's existing shop
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::JSONLD]);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $shops   = $this->assertHydraCollection($this->getJsonResponse($client));
         $shopIri = $this->findInCollection($shops, 'name', 'La Caverne aux Merveilles')['@id'];
 
         $client->request('PATCH', $shopIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::JSONLD,
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: json_encode([
             'name'        => 'La Grotte aux Merveilles',
             'description' => 'Nouvelle description',
@@ -67,7 +65,7 @@ final class ShopManagementTest extends ApiTestCase
         $client->request('DELETE', $shopIri, server: $this->authHeaders($token));
         $this->assertResourceDeleted();
 
-        $client->request('GET', $shopIri, server: ['HTTP_ACCEPT' => self::JSONLD]);
+        $client->request('GET', $shopIri, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -76,13 +74,13 @@ final class ShopManagementTest extends ApiTestCase
         $client      = $this->getTestClientAndReloadFixtures();
         $buyerToken  = $this->getJwtToken($client, 'acheteur@collector.shop', 'buyer-fixture-password');
 
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::JSONLD]);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $shops   = $this->assertHydraCollection($this->getJsonResponse($client));
         $shopIri = $this->findInCollection($shops, 'name', 'La Caverne aux Merveilles')['@id'];
 
         $client->request('PATCH', $shopIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::JSONLD,
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $this->authHeaders($buyerToken)), content: json_encode(['name' => 'Prise de contrôle']));
 
         self::assertResponseStatusCodeSame(403);
@@ -103,7 +101,7 @@ final class ShopManagementTest extends ApiTestCase
         $this->createItemViaApi($client, $token, 'Item 2', $shopIri, $categoryIri, 2000);
 
         // The shop's `items` field should list them
-        $client->request('GET', $shopIri, server: array_merge(['HTTP_ACCEPT' => self::JSONLD], $auth));
+        $client->request('GET', $shopIri, server: array_merge(['HTTP_ACCEPT' => self::CT_JSONLD], $auth));
         self::assertResponseIsSuccessful();
         $shop = $this->getJsonResponse($client);
 
@@ -115,7 +113,7 @@ final class ShopManagementTest extends ApiTestCase
     {
         $client = $this->getTestClient();
 
-        $this->jsonLdRequest($client, 'POST', '/api/shops', ['name' => 'Boutique anonyme']);
+        $this->jsonLdRequest($client, 'POST', self::API_SHOPS, ['name' => 'Boutique anonyme']);
 
         self::assertResponseStatusCodeSame(401);
     }

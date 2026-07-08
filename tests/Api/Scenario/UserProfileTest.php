@@ -12,8 +12,6 @@ use App\Tests\Api\ApiTestCase;
  */
 final class UserProfileTest extends ApiTestCase
 {
-    private const JSONLD = 'application/ld+json';
-
     public function testUserUpdatesOwnProfile(): void
     {
         $client = $this->getTestClientAndReloadFixtures();
@@ -21,15 +19,15 @@ final class UserProfileTest extends ApiTestCase
         $auth   = $this->authHeaders($token);
 
         // Find seller's IRI
-        $client->request('GET', '/api/users', server: ['HTTP_ACCEPT' => self::JSONLD]);
+        $client->request('GET', self::API_USERS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $users  = $this->assertHydraCollection($this->getJsonResponse($client));
         $seller = $this->findInCollection($users, 'email', AppFixtures::SELLER_EMAIL);
         $userIri = $seller['@id'];
 
         // Update pseudo and phoneNumber
         $client->request('PATCH', $userIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::JSONLD,
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: json_encode([
             'pseudo'      => 'RetroHunterUpdated',
             'phoneNumber' => '+33612345678',
@@ -48,15 +46,15 @@ final class UserProfileTest extends ApiTestCase
         $sellerToken = $this->getSellerToken($client);
 
         // Get buyer's IRI
-        $client->request('GET', '/api/users', server: ['HTTP_ACCEPT' => self::JSONLD]);
+        $client->request('GET', self::API_USERS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $users  = $this->assertHydraCollection($this->getJsonResponse($client));
         $buyer  = $this->findInCollection($users, 'email', AppFixtures::BUYER_EMAIL);
         $buyerIri = $buyer['@id'];
 
         // Seller tries to patch buyer's profile → 403
         $client->request('PATCH', $buyerIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::JSONLD,
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $this->authHeaders($sellerToken)), content: json_encode(['pseudo' => 'Hijacked']));
 
         self::assertResponseStatusCodeSame(403);
@@ -67,15 +65,15 @@ final class UserProfileTest extends ApiTestCase
         $client = $this->getTestClient();
 
         // Wrong email
-        $client->request('POST', '/api/auth/login',
-            server: ['CONTENT_TYPE' => 'application/json'],
+        $client->request('POST', self::API_AUTH_LOGIN,
+            server: ['CONTENT_TYPE' => self::CT_JSON],
             content: json_encode(['email' => 'nobody@collector.shop', 'password' => 'any'])
         );
         self::assertResponseStatusCodeSame(401);
 
         // Valid email, wrong password
-        $client->request('POST', '/api/auth/login',
-            server: ['CONTENT_TYPE' => 'application/json'],
+        $client->request('POST', self::API_AUTH_LOGIN,
+            server: ['CONTENT_TYPE' => self::CT_JSON],
             content: json_encode(['email' => AppFixtures::SELLER_EMAIL, 'password' => 'wrongpassword'])
         );
         self::assertResponseStatusCodeSame(401);
@@ -86,7 +84,7 @@ final class UserProfileTest extends ApiTestCase
         $client = $this->getTestClientAndReloadFixtures();
 
         // Register with an email that already exists in fixtures
-        $this->jsonLdRequest($client, 'POST', '/api/users', [
+        $this->jsonLdRequest($client, 'POST', self::API_USERS, [
             'email'    => AppFixtures::SELLER_EMAIL,
             'pseudo'   => 'Doublon',
             'password' => 'password123',
@@ -99,7 +97,7 @@ final class UserProfileTest extends ApiTestCase
     {
         $client = $this->getTestClient();
 
-        $this->jsonLdRequest($client, 'POST', '/api/users', [
+        $this->jsonLdRequest($client, 'POST', self::API_USERS, [
             'email'    => 'not-an-email',
             'pseudo'   => 'TestUser',
             'password' => 'password123',
@@ -114,28 +112,28 @@ final class UserProfileTest extends ApiTestCase
         $token  = $this->getSellerToken($client);
         $auth   = $this->authHeaders($token);
 
-        $client->request('GET', '/api/users', server: ['HTTP_ACCEPT' => self::JSONLD]);
+        $client->request('GET', self::API_USERS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $users   = $this->assertHydraCollection($this->getJsonResponse($client));
         $userIri = $this->findInCollection($users, 'email', AppFixtures::SELLER_EMAIL)['@id'];
 
         // Change password
         $client->request('PATCH', $userIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::JSONLD,
-            'CONTENT_TYPE' => 'application/merge-patch+json',
+            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: json_encode(['password' => 'newpassword456']));
 
         self::assertResponseIsSuccessful();
 
         // Old password no longer works
-        $client->request('POST', '/api/auth/login',
-            server: ['CONTENT_TYPE' => 'application/json'],
+        $client->request('POST', self::API_AUTH_LOGIN,
+            server: ['CONTENT_TYPE' => self::CT_JSON],
             content: json_encode(['email' => AppFixtures::SELLER_EMAIL, 'password' => AppFixtures::SELLER_PASSWORD])
         );
         self::assertResponseStatusCodeSame(401);
 
         // New password works
-        $client->request('POST', '/api/auth/login',
-            server: ['CONTENT_TYPE' => 'application/json'],
+        $client->request('POST', self::API_AUTH_LOGIN,
+            server: ['CONTENT_TYPE' => self::CT_JSON],
             content: json_encode(['email' => AppFixtures::SELLER_EMAIL, 'password' => 'newpassword456'])
         );
         self::assertResponseIsSuccessful();

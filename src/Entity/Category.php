@@ -23,15 +23,17 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new GetCollection(),
         new Get(),
-        new Post(security: 'is_granted("ROLE_ADMIN")'),
-        new Patch(security: 'is_granted("ROLE_ADMIN")'),
-        new Delete(security: 'is_granted("ROLE_ADMIN")'),
+        new Post(security: self::ADMIN_SECURITY),
+        new Patch(security: self::ADMIN_SECURITY),
+        new Delete(security: self::ADMIN_SECURITY),
     ]
 )]
 #[ApiFilter(SearchFilter::class, properties: ['name' => 'partial', 'slug' => 'exact'])]
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category
 {
+    private const string ADMIN_SECURITY = 'is_granted("ROLE_ADMIN")';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

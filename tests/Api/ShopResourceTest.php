@@ -8,14 +8,13 @@ use App\DataFixtures\AppFixtures;
 
 final class ShopResourceTest extends ApiTestCase
 {
-    private const ACCEPT_JSONLD = 'application/ld+json';
-    private const FIXTURE_SHOP_NAME = 'La Caverne aux Merveilles';
+    private const string FIXTURE_SHOP_NAME = 'La Caverne aux Merveilles';
 
     public function testGetShopsCollectionIsPublicAndContainsFixtureShop(): void
     {
         $client = $this->getTestClient();
 
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         self::assertResponseIsSuccessful();
 
         $data = $this->getJsonResponse($client);
@@ -36,11 +35,11 @@ final class ShopResourceTest extends ApiTestCase
         $client = $this->getTestClientAndReloadFixtures();
         $auth = $this->authHeaders($this->getSellerToken($client));
 
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $members = $this->assertHydraCollection($this->getJsonResponse($client));
         $ownerIri = $this->findInCollection($members, 'name', self::FIXTURE_SHOP_NAME)['owner'];
 
-        $client->request('GET', $ownerIri, server: array_merge(['HTTP_ACCEPT' => self::ACCEPT_JSONLD], $auth));
+        $client->request('GET', $ownerIri, server: array_merge(['HTTP_ACCEPT' => self::CT_JSONLD], $auth));
         self::assertResponseIsSuccessful();
     }
 
@@ -48,7 +47,7 @@ final class ShopResourceTest extends ApiTestCase
     {
         $client = $this->getTestClient();
 
-        $client->request('GET', '/api/shops/'.$this->getNonExistentId(), server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', self::API_SHOPS.'/'.$this->getNonExistentId(), server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -57,7 +56,7 @@ final class ShopResourceTest extends ApiTestCase
     {
         $client = $this->getTestClient();
 
-        $this->jsonLdRequest($client, 'POST', '/api/shops', ['name' => 'Unauthorized Shop']);
+        $this->jsonLdRequest($client, 'POST', self::API_SHOPS, ['name' => 'Unauthorized Shop']);
 
         self::assertResponseStatusCodeSame(401);
     }
@@ -67,7 +66,7 @@ final class ShopResourceTest extends ApiTestCase
         $client = $this->getTestClientAndReloadFixtures();
 
         // Get seller's shop IRI
-        $client->request('GET', '/api/shops', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
+        $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
         $members = $this->assertHydraCollection($this->getJsonResponse($client));
         $shopIri = $this->findInCollection($members, 'name', self::FIXTURE_SHOP_NAME)['@id'];
 

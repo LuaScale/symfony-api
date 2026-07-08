@@ -180,7 +180,7 @@ abstract class ApiTestCase extends WebTestCase
         if (\is_bool($rawRunningInContainer)) {
             $runningInContainer = $rawRunningInContainer;
         } else {
-            $runningInContainer = \filter_var(
+            $runningInContainer = filter_var(
                 $rawRunningInContainer,
                 \FILTER_VALIDATE_BOOLEAN,
                 \FILTER_NULL_ON_FAILURE

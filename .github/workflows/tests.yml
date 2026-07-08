@@ -18,7 +18,7 @@ jobs:
       # keypair can be decrypted by the test run.
       JWT_PASSPHRASE: 482d18fdcb954eed154a9d6b214526b0c7bb5b5e441328e59cd0115d15ed2287
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0 # SonarCloud needs full history for blame/new-code detection
 
@@ -74,7 +74,7 @@ jobs:
       - name: SonarCloud Scan
         # Skip on PRs from forks, which cannot access the SONAR_TOKEN secret.
         if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703 # v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io

@@ -50,9 +50,24 @@ RUN composer install \
     --no-progress \
     --no-interaction
 
-# Copy the application source and finalize an optimized, prod-only autoloader.
-COPY . .
+# Copy only known application directories — avoids accidentally baking in
+# local secrets, caches, or dev artefacts that .dockerignore might miss.
+COPY bin/ bin/
+COPY config/ config/
+COPY migrations/ migrations/
+COPY public/ public/
+COPY src/ src/
+COPY templates/ templates/
+COPY .env .env
+
 RUN composer dump-autoload --no-dev --classmap-authoritative
+
+# Switch to a non-root user for the production runtime.
+# Port 8080 is used so the process does not need CAP_NET_BIND_SERVICE.
+RUN addgroup -g 1001 -S app && adduser -u 1001 -S app -G app -h /app
+RUN chown -R app:app /app
+USER app
 
 # NOTE: cache warmup, `assets:install`, JWT keys, and secrets are runtime concerns
 # and must be provided by the deployment environment (they are not baked in here).
+ENTRYPOINT ["frankenphp", "php-server", "--listen", ":8080", "--root", "public/"]

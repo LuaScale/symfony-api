@@ -16,6 +16,14 @@
         <server name="APP_ENV" value="test" force="true" />
         <server name="APP_RUNNING_IN_CONTAINER" value="true" force="true"/>
         <server name="SHELL_VERBOSITY" value="-1" />
+        <server name="KERNEL_CLASS" value="App\Kernel" force="true"/>
+        <server name="DATABASE_URL" value="postgresql://app:root@database:5432/app?serverVersion=16&amp;charset=utf8" force="true"/>
+
+        <!-- ###+ lexik/jwt-authentication-bundle ### -->
+        <env name="JWT_SECRET_KEY" value="%kernel.project_dir%/config/jwt/private.pem"/>
+        <env name="JWT_PUBLIC_KEY" value="%kernel.project_dir%/config/jwt/public.pem"/>
+        <env name="JWT_PASSPHRASE" value="482d18fdcb954eed154a9d6b214526b0c7bb5b5e441328e59cd0115d15ed2287"/>
+        <!-- ###- lexik/jwt-authentication-bundle ### -->
     </php>
 
     <testsuites>

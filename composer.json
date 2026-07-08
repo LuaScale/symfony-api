@@ -4,7 +4,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.4",
+        "php": ">=8.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "api-platform/doctrine-orm": "^4.2",
@@ -33,7 +33,12 @@
         "symfony/yaml": "8.0.*"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
         "liip/test-fixtures-bundle": "*",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "*",
         "symfony/browser-kit": "8.0.*",
         "symfony/css-selector": "8.0.*",
@@ -42,11 +47,15 @@
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,
+            "phpstan/extension-installer": true,
             "symfony/flex": true,
             "symfony/runtime": true
         },
         "bump-after-update": true,
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "php": "8.5"
+        }
     },
     "autoload": {
         "psr-4": {
@@ -89,6 +98,18 @@
         ],
         "test:docker:coverage:clean": [
             "powershell -NoProfile -File .\\scripts\\test-coverage-clean.ps1"
+        ],
+        "test": [
+            "@php vendor/bin/phpunit"
+        ],
+        "phpstan": [
+            "@php vendor/bin/phpstan analyse --no-progress --memory-limit=512M"
+        ],
+        "cs:check": [
+            "@php vendor/bin/php-cs-fixer fix --dry-run --diff --show-progress=none"
+        ],
+        "cs:fix": [
+            "@php vendor/bin/php-cs-fixer fix"
         ]
     },
     "conflict": {

@@ -1,0 +1,18 @@
+# phpstan/extension-installer auto-registers phpstan-symfony and phpstan-doctrine.
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 6
+    paths:
+        - src
+        - tests
+    # Boot-dependent analysis is disabled so PHPStan needs no warmed container /
+    # DB connection in CI. Uncomment and warm the cache to raise accuracy:
+    # symfony:
+    #     containerXmlPath: var/cache/test/App_KernelTestDebugContainer.xml
+    # doctrine:
+    #     objectManagerLoader: tests/object-manager.php
+    #
+    # Regenerate the baseline after intentional changes with:
+    #   composer phpstan -- --generate-baseline

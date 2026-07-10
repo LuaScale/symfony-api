@@ -1,0 +1,163 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Property App\\Entity\\Category\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Category.php
+
+		-
+			message: '#^Property App\\Entity\\Category\:\:\$slug type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Category.php
+
+		-
+			message: '#^Property App\\Entity\\Item\:\:\$category type mapping mismatch\: property can contain App\\Entity\\Category\|null but database expects App\\Entity\\Category\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Item.php
+
+		-
+			message: '#^Property App\\Entity\\Item\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Item.php
+
+		-
+			message: '#^Property App\\Entity\\Item\:\:\$description type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Item.php
+
+		-
+			message: '#^Property App\\Entity\\Item\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Item.php
+
+		-
+			message: '#^Property App\\Entity\\Item\:\:\$price type mapping mismatch\: property can contain int\|null but database expects int\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Item.php
+
+		-
+			message: '#^Property App\\Entity\\Item\:\:\$shop type mapping mismatch\: property can contain App\\Entity\\Shop\|null but database expects App\\Entity\\Shop\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Item.php
+
+		-
+			message: '#^Property App\\Entity\\Item\:\:\$status type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Item.php
+
+		-
+			message: '#^Property App\\Entity\\Shop\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Shop.php
+
+		-
+			message: '#^Property App\\Entity\\Shop\:\:\$owner type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Shop.php
+
+		-
+			message: '#^Method App\\Entity\\User\:\:setRoles\(\) has parameter \$roles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$email type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$isVerified type mapping mismatch\: property can contain bool\|null but database expects bool\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$password type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$pseudo type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Property App\\Entity\\User\:\:\$roles type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/User.php
+
+		-
+			message: '#^Class App\\Security\\Voter\\ItemVoter extends generic class Symfony\\Component\\Security\\Core\\Authorization\\Voter\\Voter but does not specify its types\: TAttribute, TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Security/Voter/ItemVoter.php
+
+		-
+			message: '#^Class App\\Security\\Voter\\ShopVoter extends generic class Symfony\\Component\\Security\\Core\\Authorization\\Voter\\Voter but does not specify its types\: TAttribute, TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Security/Voter/ShopVoter.php
+
+		-
+			message: '#^Class App\\State\\UserPasswordHasherProcessor implements generic interface ApiPlatform\\State\\ProcessorInterface but does not specify its types\: T1, T2$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/State/UserPasswordHasherProcessor.php
+
+		-
+			message: '#^Method App\\State\\UserPasswordHasherProcessor\:\:__construct\(\) has parameter \$persistProcessor with generic interface ApiPlatform\\State\\ProcessorInterface but does not specify its types\: T1, T2$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/State/UserPasswordHasherProcessor.php
+
+		-
+			message: '#^Method App\\Tests\\Api\\ApiTestCase\:\:getTestClient\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Api/ApiTestCase.php
+
+		-
+			message: '#^Method App\\Tests\\Api\\ApiTestCase\:\:getTestClient\(\) has parameter \$server with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Api/ApiTestCase.php
+
+		-
+			message: '#^Method App\\Tests\\Api\\ApiTestCase\:\:getTestClientAndReloadFixtures\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Api/ApiTestCase.php
+
+		-
+			message: '#^Method App\\Tests\\Api\\ApiTestCase\:\:getTestClientAndReloadFixtures\(\) has parameter \$server with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Api/ApiTestCase.php
+
+		-
+			message: '#^Method App\\Tests\\Api\\ApiTestCase\:\:jsonLdRequest\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Api/ApiTestCase.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertIsString\(\) with string will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Api/UserResourceTest.php

@@ -14,7 +14,7 @@ final class ShopManagementTest extends ApiTestCase
     public function testCreateShopAsAuthenticatedUser(): void
     {
         $client = $this->getTestClientAndReloadFixtures();
-        $token  = $this->getSellerToken($client);
+        $token = $this->getSellerToken($client);
 
         $shopIri = $this->createShopViaApi($client, $token, 'Nouvelle Boutique Test', 'Description de la boutique');
 
@@ -32,19 +32,19 @@ final class ShopManagementTest extends ApiTestCase
     public function testUpdateShopAsOwner(): void
     {
         $client = $this->getTestClientAndReloadFixtures();
-        $token  = $this->getSellerToken($client);
-        $auth   = $this->authHeaders($token);
+        $token = $this->getSellerToken($client);
+        $auth = $this->authHeaders($token);
 
         // Get seller's existing shop
         $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
-        $shops   = $this->assertHydraCollection($this->getJsonResponse($client));
+        $shops = $this->assertHydraCollection($this->getJsonResponse($client));
         $shopIri = $this->findInCollection($shops, 'name', 'La Caverne aux Merveilles')['@id'];
 
         $client->request('PATCH', $shopIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'HTTP_ACCEPT' => self::CT_JSONLD,
             'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: json_encode([
-            'name'        => 'La Grotte aux Merveilles',
+            'name' => 'La Grotte aux Merveilles',
             'description' => 'Nouvelle description',
         ]));
 
@@ -57,7 +57,7 @@ final class ShopManagementTest extends ApiTestCase
     public function testDeleteShopAsOwner(): void
     {
         $client = $this->getTestClientAndReloadFixtures();
-        $token  = $this->getSellerToken($client);
+        $token = $this->getSellerToken($client);
 
         // Create a disposable shop
         $shopIri = $this->createShopViaApi($client, $token, 'Boutique à supprimer');
@@ -71,15 +71,15 @@ final class ShopManagementTest extends ApiTestCase
 
     public function testCannotUpdateAnotherUsersShop(): void
     {
-        $client      = $this->getTestClientAndReloadFixtures();
-        $buyerToken  = $this->getJwtToken($client, 'acheteur@collector.shop', 'buyer-fixture-password');
+        $client = $this->getTestClientAndReloadFixtures();
+        $buyerToken = $this->getJwtToken($client, 'acheteur@collector.shop', 'buyer-fixture-password');
 
         $client->request('GET', self::API_SHOPS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
-        $shops   = $this->assertHydraCollection($this->getJsonResponse($client));
+        $shops = $this->assertHydraCollection($this->getJsonResponse($client));
         $shopIri = $this->findInCollection($shops, 'name', 'La Caverne aux Merveilles')['@id'];
 
         $client->request('PATCH', $shopIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'HTTP_ACCEPT' => self::CT_JSONLD,
             'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $this->authHeaders($buyerToken)), content: json_encode(['name' => 'Prise de contrôle']));
 
@@ -89,11 +89,11 @@ final class ShopManagementTest extends ApiTestCase
     public function testShopItemsPopulatedAfterItemCreation(): void
     {
         $client = $this->getTestClientAndReloadFixtures();
-        $token  = $this->getSellerToken($client);
-        $auth   = $this->authHeaders($token);
+        $token = $this->getSellerToken($client);
+        $auth = $this->authHeaders($token);
 
         // Create a fresh shop
-        $shopIri     = $this->createShopViaApi($client, $token, 'Boutique avec Items');
+        $shopIri = $this->createShopViaApi($client, $token, 'Boutique avec Items');
         $categoryIri = $this->getFirstCategoryIri($client);
 
         // Add two items

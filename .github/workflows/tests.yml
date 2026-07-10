@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: PHPUnit (Docker) + coverage
+    runs-on: ubuntu-latest
+    env:
+      # Must match the passphrase hard-coded in phpunit.dist.xml so the generated
+      # keypair can be decrypted by the test run.
+      JWT_PASSPHRASE: 482d18fdcb954eed154a9d6b214526b0c7bb5b5e441328e59cd0115d15ed2287
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0 # SonarCloud needs full history for blame/new-code detection
+
+      - name: Start services
+        run: docker compose up -d --build
+
+      - name: Wait for database
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T database pg_isready -U app -d app; then exit 0; fi
+            sleep 2
+          done
+          echo "Database did not become ready in time" >&2
+          exit 1
+
+      - name: Install dependencies
+        run: docker compose exec -T api composer install --no-interaction --no-progress
+
+      - name: Generate JWT keypair
+        run: >-
+          docker compose exec -T -e APP_ENV=test -e JWT_PASSPHRASE=$JWT_PASSPHRASE api
+          php bin/console lexik:jwt:generate-keypair --overwrite --no-interaction
+
+      - name: Create test database
+        # In the test environment Doctrine appends the "_test" suffix, which the
+        # Postgres container does not create on its own.
+        run: >-
+          docker compose exec -T -e APP_ENV=test api
+          php bin/console doctrine:database:create --if-not-exists
+
+      - name: Run migrations
+        run: >-
+          docker compose exec -T -e APP_ENV=test api
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+
+      - name: Validate Doctrine schema
+        run: >-
+          docker compose exec -T -e APP_ENV=test api
+          php bin/console doctrine:schema:validate --skip-sync
+
+      - name: Run PHPUnit with coverage
+        run: >-
+          docker compose exec -T -e APP_RUNNING_IN_CONTAINER=1 -e APP_ENV=test api
+          php vendor/bin/phpunit
+          --coverage-clover var/coverage/clover.xml
+          --log-junit var/coverage/junit.xml

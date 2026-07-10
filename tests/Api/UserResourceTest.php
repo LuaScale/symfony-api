@@ -26,7 +26,7 @@ final class UserResourceTest extends ApiTestCase
         self::assertIsString($fixtureUser['pseudo'] ?? null);
         self::assertArrayNotHasKey('password', $fixtureUser, 'password must never be exposed in API responses');
 
-        if (array_key_exists('isVerified', $fixtureUser)) {
+        if (\array_key_exists('isVerified', $fixtureUser)) {
             self::assertIsBool($fixtureUser['isVerified']);
         }
     }

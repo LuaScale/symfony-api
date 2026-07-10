@@ -33,4 +33,3 @@ final class RelationsTest extends TestCase
         self::assertTrue($category->getItems()->contains($item));
     }
 }
-

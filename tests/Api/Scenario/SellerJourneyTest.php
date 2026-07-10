@@ -30,7 +30,7 @@ final class SellerJourneyTest extends ApiTestCase
 
         // 2. Login → JWT
         $token = $this->getJwtToken($client, $uniqueEmail, 'password123');
-        $auth  = $this->authHeaders($token);
+        $auth = $this->authHeaders($token);
 
         // 3. Create a shop
         $shopIri = $this->createShopViaApi($client, $token, 'Ma Boutique E2E', 'Boutique de test');
@@ -128,21 +128,21 @@ final class SellerJourneyTest extends ApiTestCase
     public function testSellerUpdatesItemStatusTransitions(): void
     {
         $client = $this->getTestClientAndReloadFixtures();
-        $token  = $this->getSellerToken($client);
+        $token = $this->getSellerToken($client);
 
         // Existing DRAFT item from fixtures
         $client->request('GET', self::API_ITEMS, server: ['HTTP_ACCEPT' => self::CT_JSONLD]);
-        $items   = $this->assertHydraCollection($this->getJsonResponse($client));
+        $items = $this->assertHydraCollection($this->getJsonResponse($client));
         $draftItem = $this->findInCollection($items, 'name', 'Game Boy Color – Violet');
-        $itemIri   = $draftItem['@id'];
+        $itemIri = $draftItem['@id'];
         self::assertSame('DRAFT', $draftItem['status']);
 
         $auth = $this->authHeaders($token);
-        $patch = static fn(array $data) => json_encode($data);
+        $patch = static fn (array $data) => json_encode($data);
 
         // DRAFT → VALIDATED
         $client->request('PATCH', $itemIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'HTTP_ACCEPT' => self::CT_JSONLD,
             'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: $patch(['status' => 'VALIDATED']));
         self::assertResponseIsSuccessful();
@@ -150,7 +150,7 @@ final class SellerJourneyTest extends ApiTestCase
 
         // VALIDATED → REJECTED
         $client->request('PATCH', $itemIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'HTTP_ACCEPT' => self::CT_JSONLD,
             'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: $patch(['status' => 'REJECTED']));
         self::assertResponseIsSuccessful();
@@ -158,7 +158,7 @@ final class SellerJourneyTest extends ApiTestCase
 
         // REJECTED → DRAFT (back to draft is allowed)
         $client->request('PATCH', $itemIri, server: array_merge([
-            'HTTP_ACCEPT'  => self::CT_JSONLD,
+            'HTTP_ACCEPT' => self::CT_JSONLD,
             'CONTENT_TYPE' => self::CT_MERGE_PATCH,
         ], $auth), content: $patch(['status' => 'DRAFT']));
         self::assertResponseIsSuccessful();

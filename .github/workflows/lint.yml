@@ -1,0 +1,44 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  symfony-lint:
+    name: Symfony lint
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: dev
+      APP_DEBUG: 0
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          extensions: ctype, iconv, intl, pdo_pgsql, sodium, zip, opcache
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@a8d0d959dab41457692a5e2041bd9b757a119e3f # 3.2.1
+
+      - name: Generate JWT keypair
+        # Needed so the DI container can compile the lexik bundle.
+        run: php bin/console lexik:jwt:generate-keypair --overwrite --no-interaction
+
+      - name: Lint YAML
+        run: php bin/console lint:yaml config --parse-tags
+
+      - name: Lint Twig
+        run: php bin/console lint:twig templates
+
+      - name: Lint DI container
+        run: php bin/console lint:container

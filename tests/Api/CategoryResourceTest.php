@@ -15,7 +15,7 @@ final class CategoryResourceTest extends ApiTestCase
         $client->request('GET', '/api/categories', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
 
         // Validate Hydra collection structure
         $members = $this->assertHydraCollection($data);
@@ -34,7 +34,7 @@ final class CategoryResourceTest extends ApiTestCase
         $client->request('GET', '/api/categories', server: ['HTTP_ACCEPT' => self::ACCEPT_JSONLD]);
         self::assertResponseIsSuccessful();
 
-        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($client->getResponse()->getContent() ?: '', true, 512, \JSON_THROW_ON_ERROR);
 
         // Validate Hydra collection structure
         $members = $this->assertHydraCollection($data);

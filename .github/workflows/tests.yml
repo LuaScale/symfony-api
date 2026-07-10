@@ -65,16 +65,3 @@ jobs:
           php vendor/bin/phpunit
           --coverage-clover var/coverage/clover.xml
           --log-junit var/coverage/junit.xml
-
-      - name: Rewrite report paths for SonarCloud
-        # Reports are generated with the container-absolute "/app" prefix; the Sonar
-        # scanner (a Docker action) mounts the workspace at /github/workspace.
-        run: sed -i 's#/app/#/github/workspace/#g' var/coverage/clover.xml var/coverage/junit.xml
-
-      - name: SonarCloud Scan
-        # Skip on PRs from forks, which cannot access the SONAR_TOKEN secret.
-        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: SonarSource/sonarqube-scan-action@2f77a1ec69fb1d595b06f35ab27e97605bdef703 # v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io

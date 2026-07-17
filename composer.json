@@ -40,8 +40,8 @@
         "phpstan/phpstan-doctrine": "^2.0",
         "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "*",
-        "symfony/browser-kit": "8.0.*",
-        "symfony/css-selector": "8.0.*",
+        "symfony/browser-kit": "8.1.*",
+        "symfony/css-selector": "8.1.*",
         "symfony/maker-bundle": "^1.65"
     },
     "config": {
